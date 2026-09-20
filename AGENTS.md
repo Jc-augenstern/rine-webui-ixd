@@ -1,3 +1,19 @@
+# IXD 星图开发约束（2026-09-21，优先于下方历史记录）
+
+- 当前用户为 Jc-augenstern，本次仓库为其 Fork，开发分支 feat/ixd-star-map-redesign。
+- zwh087383/rine-webui-ixd 仅作为只读 upstream；绝对禁止 push、改分支、改 Settings 或创建 PR。历史记录中的其他用户授权不适用于当前任务。
+- origin 必须为 https://github.com/Jc-augenstern/rine-webui-ixd.git；upstream push URL 故意无效，.githooks/pre-push 再限制目标。
+- 从原工程增量修改，保留 BootSequence、IXD Logo、轨道/HUD 时间轴、Three.js 基础、音频和画质设置。原档案工程与美术文件仍保留。
+- 正常产品入口为开场 → 等待登录 → 授权 → 2× Welcome → 星图；开发时的原档案/逐帧对照入口仅 DEV 开放。
+- 固定公开 Demo 账号 ixd-demo / ixd2026，集中在 src/auth/dev-auth-config.ts。这不是安全认证。真实鉴权由未来后端完成，不保存密码/令牌到浏览器。
+- 社团内容只依用户 Word 初稿，典型项目是示例，不可编造既有成果、人员、获奖、活动日期或报名渠道。
+- 星图内容维护 src/data/club-content.ts 与 star-map.ts；天空维护 src/galaxy，UI 维护 src/ui，状态机维护 src/ixd-experience.ts。
+- 验证 npm run check:auth、npm run build 与真实浏览器登录/星图/响应式。不要提交 node_modules、dist、研究素材、凭证或授权字体。
+
+---
+
+## 以下为原工程历史记录，仅供技术溯源
+
 # Rhine Lab UI
 
 ## IXD 独立仓库同步（2026-09-20）

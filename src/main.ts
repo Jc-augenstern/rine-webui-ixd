@@ -19,6 +19,8 @@ import { ArchiveScene } from "./scene";
 import { ModelViewer } from "./model-viewer";
 import { ContentTransition, SurfaceTransition } from "./ui-transitions";
 import { BootSequence } from "./boot";
+import { IxdExperience } from "./ixd-experience";
+let experience: IxdExperience | undefined;
 import { loadBootWebfonts } from "./boot-lettering";
 import { wrap, type ArchiveNavigation } from "./archive-loop";
 import {
@@ -106,7 +108,9 @@ let modal: "search" | "saved" | "settings" | null = null,
   searchQuery = "",
   filter = "全部档案";
 let activeTab = "overview";
-const reviewParams = new URLSearchParams(location.search);
+const reviewParams = new URLSearchParams(import.meta.env.DEV || isWallpaper ? location.search : "");
+const legacyReview = import.meta.env.DEV && (reviewParams.has("time") || reviewParams.get("review") === "1" || reviewParams.get("experience") === "archive");
+const starExperience = !isWallpaper && !legacyReview;
 let frozenTime =
   reviewParams.get("freeze") === "1"
     ? Number(reviewParams.get("time") ?? 0)
@@ -218,7 +222,7 @@ const loading = $("#loading");
 $("#viewport").append(loading);
 $("#stage").inert = true;
 $(".mobile-entry").inert = true;
-const entry = !isWallpaper && !reviewEntry && (prefs.sound || prefs.music) ? new StartupGate({
+const entry = !starExperience && !isWallpaper && !reviewEntry && (prefs.sound || prefs.music) ? new StartupGate({
   root: loading,
   unlock: () => audio.unlock(),
   cancel: () => audio.cancelEntry(),
@@ -247,11 +251,13 @@ function saveAudioPrefs() {
     localStorage.setItem("rhine-settings", JSON.stringify(prefs));
   } catch {}
   configureAudio();
+  experience?.setSound(prefs.sound);
 }
 function superPerformanceEnabled() { return isWallpaper ? wallpaperHost()?.properties.superperformance?.value === true : prefs.superPerformance; }
 function effectiveRenderQuality() { return superPerformanceEnabled() ? superPerformanceQuality : prefs.rendering; }
 function savePrefs() {
   saveAudioPrefs();
+  experience?.configure();
   if (prefs.reduced) {
     rollingTitles.forEach(title => title.finish());
     detailTransition.finish();
@@ -309,6 +315,7 @@ function fit() {
     previousLayout = layoutKey;
     scene?.resize();
     viewer?.resize();
+    experience?.resize();
   }
   updateQualitySummary();
   // Re-measure line covers and tab underline after wrapping changes.
@@ -459,6 +466,9 @@ function replayBoot(forcePreview = false) {
   closeModal(() => replayBootAfterModal(forcePreview));
 }
 function replayBootAfterModal(forcePreview: boolean) {
+  if (experience) {
+    experience.restart(); setMode("boot"); audio.restartBoot(); return;
+  }
   bootStart = performance.now() / 1000 - 1.76;
   frozenTime = null;
   lastStep = "";
@@ -573,6 +583,7 @@ function openModal(kind: NonNullable<typeof modal>) {
     modalSiblings.forEach(({ node }) => (node.inert = true));
   }
   modalClosing = false;
+  experience?.setModalOpen(true);
   modal = kind;
   searchQuery = "";
   filter = "全部档案";
@@ -594,6 +605,7 @@ function closeModal(afterClose?: () => void) {
     modalTransition = undefined;
     modalSiblings.forEach(({ node, inert }) => (node.inert = inert));
     modalSiblings = [];
+    experience?.setModalOpen(false);
     $("#archive-ui").inert = mode !== "archive" || Boolean(workbench?.enabled);
     $("#detail-ui").inert = mode !== "detail";
     previousFocus?.focus({ preventScroll: true });
@@ -650,6 +662,7 @@ function renderResults() {
 function updateQualitySummary() {
   const summary = document.querySelector("#quality-summary");
   if (!summary) return;
+  if (experience) { summary.textContent = "IXD 星空 · GPU 分层粒子 · 像素密度最高 2× · 星图自动限制渲染预算；原档案专用阴影与透射设置保留。"; return; }
   if (!scene) { summary.textContent = "3D 已关闭 · 三维模型与渲染资源已释放"; return; }
   const canvas = scene.renderer.domElement;
   const metrics = JSON.parse(canvas.parentElement?.dataset.renderQuality ?? "{}");
@@ -661,7 +674,7 @@ function motionSettingsMarkup() {
     : "当前使用完整动效。"}</p>${prefs.reduced ? '<button data-action="enable-motion">启用完整动效并重播 ↻</button>' : ""}</div>`;
 }
 function settingsMarkup() {
-  return `<h2>SYSTEM SETTINGS<small>终端偏好设置</small></h2><p class="settings-intro">IXD USER <span>·</span> SESSION AUTHORIZED</p>${isWallpaper ? '<p class="wallpaper-settings-note">每次启动都会读取 Wallpaper Engine 中的设置。在此修改仅对当前运行生效，无法持久保存；如需保留，请在 Wallpaper Engine 的壁纸属性中调整。</p>' : ""}<div class="settings-list">${themeSettingsMarkup(prefs.colorTheme === "dark")}${!isWallpaper ? `<label><div><strong>SUPER PERFORMANCE</strong><span>降低三维画质和渲染分辨率，保留完整动效；关闭后恢复原画质</span></div><input type="checkbox" data-pref="superPerformance" ${prefs.superPerformance ? "checked" : ""}/><i class="toggle"></i></label>` : ""}${workbench?.settingsMarkup() ?? ""}${audioSettingsMarkup(prefs)}<label><div><strong>REDUCED MOTION</strong><span>跳过开机动画，简化选档、镜头和文字动效</span></div><input type="checkbox" data-pref="reduced" ${prefs.reduced ? "checked" : ""}/><i class="toggle"></i></label></div>${motionSettingsMarkup()}${qualityMarkup(prefs.rendering)}${pwaSettingsMarkup()}<div class="settings-shortcuts">${isWallpaper ? '<span>DESKTOP CONTROLS</span><p>拖动阵列或点击界面按钮浏览档案。桌面模式下，方向键与滚轮可能无法传入壁纸。</p>' : '<span>KEYBOARD CONTROLS</span><p><kbd>←</kbd><kbd>→</kbd> 切列 <kbd>↑</kbd><kbd>↓</kbd> 选档 <kbd>ENTER</kbd> 读取 <kbd>/</kbd> 检索 <kbd>ESC</kbd> 返回</p>'}</div><div class="settings-bottom">${!isWallpaper && document.fullscreenEnabled ? '<button data-action="fullscreen">FULLSCREEN <span>↗</span></button>' : ''}<button data-action="restart">REINITIALIZE SYSTEM <span>↻</span></button></div><div class="modal-bottom"><span>ANALYSIS OS / 1.0 · 使用 MiSans 字体（小米） <a href="${assetUrl("fonts/MiSans-license.pdf")}" target="_blank" rel="noopener">字体许可</a></span><span>POWERED BY IXD</span></div>`;
+  return `<h2>SYSTEM SETTINGS<small>终端偏好设置</small></h2><p class="settings-intro">IXD USER <span>·</span> SESSION AUTHORIZED</p>${isWallpaper ? '<p class="wallpaper-settings-note">每次启动都会读取 Wallpaper Engine 中的设置。在此修改仅对当前运行生效，无法持久保存；如需保留，请在 Wallpaper Engine 的壁纸属性中调整。</p>' : ""}<div class="settings-list">${themeSettingsMarkup(prefs.colorTheme === "dark", starExperience ? "开场与设置的配色；星图保持深空背景" : undefined)}${!isWallpaper ? `<label><div><strong>SUPER PERFORMANCE</strong><span>降低三维画质和渲染分辨率，保留完整动效；关闭后恢复原画质</span></div><input type="checkbox" data-pref="superPerformance" ${prefs.superPerformance ? "checked" : ""}/><i class="toggle"></i></label>` : ""}${workbench?.settingsMarkup() ?? ""}${audioSettingsMarkup(prefs)}<label><div><strong>REDUCED MOTION</strong><span>跳过开场、减少粒子与镜头移动；仍需登录</span></div><input type="checkbox" data-pref="reduced" ${prefs.reduced ? "checked" : ""}/><i class="toggle"></i></label></div>${motionSettingsMarkup()}${qualityMarkup(prefs.rendering)}${pwaSettingsMarkup()}<div class="settings-shortcuts">${starExperience ? '<span>KEYBOARD CONTROLS</span><p><kbd>TAB</kbd> 选择星星 <kbd>ENTER</kbd> 探索 <kbd>ESC</kbd> 返回；方向键可在星星之间移动。</p>' : isWallpaper ? '<span>DESKTOP CONTROLS</span><p>拖动阵列或点击界面按钮浏览档案。桌面模式下，方向键与滚轮可能无法传入壁纸。</p>' : '<span>KEYBOARD CONTROLS</span><p><kbd>←</kbd><kbd>→</kbd> 切列 <kbd>↑</kbd><kbd>↓</kbd> 选档 <kbd>ENTER</kbd> 读取 <kbd>/</kbd> 检索 <kbd>ESC</kbd> 返回</p>'}</div><div class="settings-bottom">${!isWallpaper && document.fullscreenEnabled ? '<button data-action="fullscreen">FULLSCREEN <span>↗</span></button>' : ''}<button data-action="restart">REINITIALIZE SYSTEM <span>↻</span></button></div><div class="modal-bottom"><span>ANALYSIS OS / 1.0 · 使用 MiSans 字体（小米） <a href="${assetUrl("fonts/MiSans-license.pdf")}" target="_blank" rel="noopener">字体许可</a></span><span>POWERED BY IXD</span></div>`;
 }
 
 document.addEventListener("input", (e) => {
@@ -739,7 +752,7 @@ document.addEventListener("click", (e) => {
   if (action === "toggle-three") { void toggleThree(); return; }
   if (action === "sound-preview") audio.play("confirm");
   if (action === "skip") {
-    setMode("archive");
+    if (experience) experience.skipIntro(); else setMode("archive");
     audio.play("confirm");
   }
   if (action === "prev") stepFile(-1);
@@ -799,6 +812,10 @@ document.addEventListener("click", (e) => {
 });
 document.addEventListener("keydown", (e) => {
   if (!started) return;
+  if (experience && !modal) {
+    if (experience.phase === "intro" && (e.key === "Escape" || e.key === "Enter")) { e.preventDefault(); experience.skipIntro(); }
+    return;
+  }
   if (viewer?.isOpen) return;
   if (playground?.active && !modal) {
     if (e.key === "Escape") { e.preventDefault(); playground.stop(); }
@@ -818,7 +835,7 @@ document.addEventListener("keydown", (e) => {
   if (modal && e.key === "Tab") {
     const focusables = [
       ...$("#modal-root").querySelectorAll<HTMLElement>(
-        'button,input:not(:disabled),select:not(:disabled),summary,[tabindex="0"]',
+        'button:not(:disabled),input:not(:disabled),select:not(:disabled),a[href],summary,[tabindex="0"]',
       ),
     ];
     const visible = focusables.filter(el => el.getClientRects().length > 0);
@@ -942,9 +959,18 @@ let lastTime = 0,
   frameStart = performance.now(),
   fps = 0;
 const frameStage = $("#stage"), frameDetail = $("#detail-content");
+let experienceLastFrame = 0;
 function frame(ms: number) {
   if (!wallpaperFrame(ms)) { requestAnimationFrame(frame); return; }
-  if (document.hidden) { requestAnimationFrame(frame); return; }
+  if (document.hidden) { experienceLastFrame = 0; requestAnimationFrame(frame); return; }
+  if (experience) {
+    const dt = experienceLastFrame ? Math.min(.1, (ms - experienceLastFrame) / 1000) : 0;
+    experienceLastFrame = ms;
+    experience.update(dt);
+    paintTheme(prefs.colorTheme === "dark" ? 1 : 0);
+    requestAnimationFrame(frame);
+    return;
+  }
   workbench?.tick();
   const time = ms / 1000;
   const theme = scene?.themeAmount ?? (prefs.colorTheme === "dark" ? 1 : 0);
@@ -1089,7 +1115,7 @@ async function toggleThree() {
 async function start() {
   try {
     if (isWallpaper) await window.rhineWallpaperPropertiesReady;
-    if (!isWallpaper || wallpaperHost()?.properties.load3donstartup?.value !== false) {
+    if (!starExperience && (!isWallpaper || wallpaperHost()?.properties.load3donstartup?.value !== false)) {
       scene = new ArchiveScene($("#three-scene"));
       scene.setTheme(prefs.colorTheme === "dark", true);
       scene.setArchiveCoverage(wallpaperHost()?.properties.archivecoverage?.value === "extra");
@@ -1139,8 +1165,20 @@ function completeStartup(silent: boolean) {
   bootStart = performance.now() / 1000 - (reviewParams.has("time") ? Number(reviewParams.get("time")) : 1.76);
   if (!reviewParams.has("time")) bootStart += fade / 1000;
   setMode("boot");
-  if (reviewParams.get("scene") === "archive" || (prefs.reduced && !reviewParams.has("time"))) setMode("archive");
-  if (reviewParams.get("scene") === "detail") setMode("detail");
+  if (starExperience) {
+    experience = new IxdExperience({
+      host: $("#viewport"), stage: $("#stage"), boot: bootSequence, audio,
+      reduced: () => prefs.reduced, quality: effectiveRenderQuality,
+      onGalaxy: () => setMode("archive"), onReplay: () => replayBoot(),
+      onSettings: () => openModal("settings"),
+      onSound: () => { prefs.sound = !prefs.sound; prefs.music = prefs.sound; saveAudioPrefs(); experience?.setSound(prefs.sound); if (prefs.sound) void audio.unlock().catch(() => false); },
+    });
+    experience.setSound(prefs.sound);
+    $("#skip").innerHTML = '前往登录 <span>↗</span>';
+  } else {
+    if (reviewParams.get("scene") === "archive" || (prefs.reduced && !reviewParams.has("time"))) setMode("archive");
+    if (reviewParams.get("scene") === "detail") setMode("detail");
+  }
   if (isWallpaper && wallpaperHost()?.properties.boot?.value === false) setMode("archive");
   $("#stage").inert = false;
   $(".mobile-entry").inert = false;
@@ -1243,12 +1281,13 @@ Object.assign(window, {
       return true;
     },
     seek: (t: number) => {
+      if (experience) return;
       setMode("boot");
       bootStart = performance.now() / 1000 - t;
       lastStep = "";
     },
-    archive: () => setMode("archive"),
-    detail: () => openFile(),
+    archive: () => { if (!experience) setMode("archive"); },
+    detail: () => { if (!experience) openFile(); },
     select: (i: number) => select(i),
     stats: () => ({
       ...scene?.getStats(),
@@ -1257,6 +1296,7 @@ Object.assign(window, {
       mode,
       ready,
       startup: started ? "started" : entry?.phase ?? "loading",
+      experience: experience?.stats() ?? null,
       motion: { reduced: prefs.reduced, systemReduced: matchMedia("(prefers-reduced-motion: reduce)").matches },
       bootTime: mode === "boot" ? started ? (frozenTime ?? performance.now() / 1000 - bootStart) + 5 : 6.76 : null,
       selected: records[selected].id,
@@ -1267,5 +1307,4 @@ Object.assign(window, {
     }),
   },
 });
-if (import.meta.hot) import.meta.hot.dispose(() => audio.dispose());
-
+if (import.meta.hot) import.meta.hot.dispose(() => { audio.dispose(); experience?.dispose(); });

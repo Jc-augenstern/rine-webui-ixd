@@ -13,6 +13,8 @@ const hasNovecento = ["Normal", "DemiBold", "Bold"].every(weight =>
   existsSync(`public/fonts/novecento/webFonts/NovecentoSansWide${weight}/font.woff2`),
 );
 export default defineConfig(({ mode }) => ({
+  // Historical frame-comparison pages are not application entry points.
+  optimizeDeps: { entries: ["index.html"] },
   base: mode === "wallpaper" ? "./" : "/",
   define: {
     __RHINE_MODELS__: JSON.stringify(Object.fromEntries(models.map(model => [model.key,model.fileName]))),

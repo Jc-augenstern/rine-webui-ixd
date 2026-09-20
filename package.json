@@ -10,6 +10,7 @@
     "dev": "vite --host 127.0.0.1",
     "prebuild": "node scripts/patch-rolling-number.mjs && node scripts/export-records.mjs && node scripts/prepare-webfonts.mjs",
     "check:content": "node --experimental-strip-types --test scripts/check-content.mjs",
+    "check:auth": "node --experimental-strip-types --test scripts/check-ixd-auth.mjs",
     "check:palette": "node --experimental-strip-types scripts/check-palette.mjs",
     "check:viewport": "node --experimental-strip-types scripts/check-viewport.mjs",
     "review:mobile": "node scripts/serve-mobile-review.mjs",
@@ -31,4 +32,3 @@
     "vite": "^7.3.1"
   }
 }
-

@@ -1,8 +1,8 @@
 {
   "id": "./",
-  "name": "IXD · Analysis OS",
+  "name": "IXD · Star Map",
   "short_name": "IXD",
-  "description": "IXD 社团交互式三维档案终端",
+  "description": "IXD 星图 · 让灵感漫步于星辰大海",
   "lang": "zh-CN",
   "start_url": "./?source=pwa",
   "scope": "./",
