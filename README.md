@@ -64,6 +64,8 @@ npm run preview
 6. 执行 `git status` 查看改动，再 `git add <需要保存的文件>`、`git commit -m "描述本次修改"` 保存版本。
 7. 确认 `git remote -v` 的 origin 是自己的仓库，再 `git push origin feat/ixd-star-map-redesign`。
 
+本机如再次遇到 GitHub 直连失败，可按 [交付报告的网络处理步骤](docs/DELIVERY.md#6-以后如何继续开发)，让当次 Git 命令使用电脑现有代理。
+
 接真实后端时，以 API 适配器替换 `src/auth/auth-service.ts` 的 `authService`，遵守 `AuthService` 接口，并删除开发凭证模块。密码验证、会话、权限、速率限制、退出等应由服务器实现；前端成功状态不是服务器授权。报名、作品发布和成员管理还需要真实后端与数据。
 
 ## Git 保护

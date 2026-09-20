@@ -11,7 +11,7 @@
 | 你的 GitHub 账号 | `Jc-augenstern` |
 | 你的仓库 | [Jc-augenstern/rine-webui-ixd](https://github.com/Jc-augenstern/rine-webui-ixd)；已创建并确认是原仓库的 Fork |
 | 本次开发分支 | `feat/ixd-star-map-redesign` |
-| 本次分支页面 | [查看开发分支](https://github.com/Jc-augenstern/rine-webui-ixd/tree/feat/ixd-star-map-redesign)；远端内容以最终推送结果为准 |
+| 本次分支页面 | [查看开发分支](https://github.com/Jc-augenstern/rine-webui-ixd/tree/feat/ixd-star-map-redesign)；网站实现已推送至此分支 |
 | 本地完整项目 | `D:\Codex\Codex_Design_B\rine-webui-ixd` |
 | 原始代码基准 | `2038d69f5ccbb18c4ebc0e18223e8961b6f9a65b` |
 | 原始源码压缩备份 | `D:\Codex\Codex_Design_B\research\upstream-baseline.zip`，位于项目外，不会随本次源码覆盖 |
@@ -30,7 +30,7 @@
 
 本地同时启用了 `.githooks/pre-push`：仅允许通过 `origin` 推送到你的仓库。`git fetch upstream` 仍可正常读取原仓库。换电脑重新克隆后，运行 `node scripts/setup-safe-remotes.mjs` 恢复这套保护。
 
-本报告不预先声称最终推送成功。最终任务回复会单独说明提交和推送结果；也可在项目目录输入以下命令查看实际版本：
+网站实现提交 `b27cfa7da5111309377c8860012553e782fe3c65` 已通过 Git 推送至你的个人分支。文档补充记录由后续提交保存；最终任务回复提供最终提交编号。也可在项目目录输入以下命令查看实际版本：
 
 ```powershell
 git branch --show-current
@@ -150,6 +150,12 @@ npm run dev
 5. 运行 `git push origin feat/ixd-star-map-redesign`，把版本同步到你自己的仓库。
 
 若需要开始下一项独立功能，可先运行 `git switch -c feat/你的新功能名` 创建新分支。同步舍友代码时，先 `git fetch upstream` 下载更新，再在单独分支审阅和合并，不要向 `upstream` 推送。
+
+本机 Git 直连 GitHub 曾出现连接重置；使用电脑现有的系统代理后推送成功。如果以后普通推送也遇到相同网络错误，且你的代理仍运行在 `127.0.0.1:7890`，可输入以下命令。它只影响当次连接，不修改全局设置：
+
+```powershell
+git -c http.proxy=http://127.0.0.1:7890 -c http.version=HTTP/1.1 push origin feat/ixd-star-map-redesign
+```
 
 ## 7. 接入真实后端时要替换的部分
 
