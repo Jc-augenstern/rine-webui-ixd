@@ -1,16 +1,11 @@
 import * as THREE from "three";
-
-const surfaces: Record<string, string> = {
-  Frosted_Polymer: "#626b70", Ivory_Edges: "#687277", Optical_Diffuser: "#192226",
-  Titanium_Fasteners: "#b1b9bb", Index_Inlay: "#c6a36b", Printed_Label: "#303a3e",
-  Subsurface_Optics: "#939e9f", Optical_Edges: "#bbc3bc", Carbon_Ink: "#b6bdb8",
-};
+import { palette, scenePalette, darkSurfaces } from "./palette";
 /** Extend existing optical shaders; one float per instance avoids new meshes or passes. */
 export function themeMaterial(material: THREE.Material, name: string, instanced = false, subduedIndex = { value: 0 }) {
   const amount = { value: 0 };
   const before = material.onBeforeCompile;
   const cache = material.customProgramCacheKey.bind(material)();
-  const color = new THREE.Color(surfaces[name] ?? (name.includes("Orange") ? "#bb8850" : "#969f9f"));
+  const color = new THREE.Color(darkSurfaces[name] ?? (name.includes("Orange") ? palette.cyan[1] : '#9baec9'));
   material.onBeforeCompile = (shader, renderer) => {
     before.call(material, shader, renderer);
     shader.uniforms.rhineTheme = amount;
@@ -26,10 +21,10 @@ export function themeMaterial(material: THREE.Material, name: string, instanced 
     const printed = name === "Printed_Canvas";
     const anchor = printed ? "#include <opaque_fragment>" : "#include <roughnessmap_fragment>";
     const dark = printed
-      ? "mix(vec3(0.023, 0.032, 0.037), vec3(0.78, 0.78, 0.71), 1.0 - smoothstep(0.12, 0.65, dot(diffuseColor.rgb, vec3(.2126,.7152,.0722))))"
+      ? "mix(vec3(0.014, 0.021, 0.037), vec3(0.81, 0.85, 0.93), 1.0 - smoothstep(0.12, 0.65, dot(diffuseColor.rgb, vec3(.2126,.7152,.0722))))"
       : name === "Frosted_Polymer" && !instanced
-        ? "mix(rhineDarkSurface, vec3(0.92, 0.96, 0.97), glassRevealAtHeight(archiveClarity, vArchiveHeight))"
-        : name === "Index_Inlay" ? "mix(rhineDarkSurface, vec3(0.030, 0.042, 0.048), rhineSubduedIndex)" : "rhineDarkSurface";
+        ? `mix(rhineDarkSurface, ${scenePalette.glassHighlight}, glassRevealAtHeight(archiveClarity, vArchiveHeight))`
+        : name === "Index_Inlay" ? "mix(rhineDarkSurface, vec3(0.023, 0.035, 0.066), rhineSubduedIndex)" : "rhineDarkSurface";
     const output = printed ? "outgoingLight" : "diffuseColor.rgb";
     shader.fragmentShader = shader.fragmentShader.replace(anchor, `${output} = mix(${output}, ${dark}, ${mix});\n${anchor}`);
   };
@@ -39,7 +34,7 @@ export function themeMaterial(material: THREE.Material, name: string, instanced 
 
 type Baseline = { background: THREE.Color; fog?: THREE.Color; intensity: number; exposure: number; lights: { light: THREE.Light; intensity: number }[]; floor?: { material: THREE.MeshStandardMaterial; color: THREE.Color } };
 const scenes = new WeakMap<THREE.Scene, Baseline>();
-const background = new THREE.Color("#11181b"), floorColor = new THREE.Color("#192125"), mistColor = new THREE.Color("#263136");
+const background = new THREE.Color(palette.paper[1]), floorColor = new THREE.Color(scenePalette.floor[1]), mistColor = new THREE.Color(scenePalette.mist[1]);
 export function themeEnvironment(scene: THREE.Scene, renderer: THREE.WebGLRenderer, amount: number) {
   let baseline = scenes.get(scene);
   if (!baseline) {

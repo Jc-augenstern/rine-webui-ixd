@@ -136,7 +136,7 @@ for x,z,r in [(-.44,1.92,.79),(1.13,2.48,.435)]:
 cube('Serial label',(-1.36,-.099,3.04),(.99,.02,.41),paper,.003)
 cube('Label top rule',(-1.36,-.116,3.23),(.98,.004,.008),ink,0)
 cube('Label bottom rule',(-1.36,-.116,2.847),(.98,.004,.005),ink,0)
-text('Company label','RHINE LAB, LLC.',-1.825,3.105,.105)
+text('Company label','IXD',-1.825,3.105,.105)
 text('Database label','INTERNAL DATABASE',-1.825,3.017,.042,core)
 text('Serial number','NO.001',-1.825,2.875,.148)
 text('Information label','INFO',-.99,3.075,.076)
@@ -144,7 +144,7 @@ text('Symbol label','+ / -',-.99,2.9,.095)
 for i in range(16):
     o=cube('Laser etched vent',(1.04+i*.054,-.111,.57),(.023,.009,.1),core,.003);o.rotation_euler.y=.4
 for i in range(25):cube('Calibration mark',(-2.23,-.108,.61+i*.052),(.035 if i%5 else .075,.005,.006),core,0)
-text('Edge inscription','R H I N E  L A B',-1.81,.28,.063,core)
+text('Edge inscription','I X D',-1.81,.28,.063,core)
 for z,x1,x2 in [(3.36,-1.8,.2),(3.36,.4,1.55),(.4,-1.45,1.75)]:
     cube('Engraved circuit trace',((x1+x2)/2,-.108,z),(x2-x1,.004,.005),core,.002)
 # Two sides of a shallow pressed channel, observed in the 37–39 second close-up.

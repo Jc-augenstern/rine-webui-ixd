@@ -1,4 +1,12 @@
-# RHINE LAB · ANALYSIS OS
+# IXD · ANALYSIS OS
+
+基于 [LBEILC/RhineLabUI](https://github.com/LBEILC/RhineLabUI) 开发的 IXD 社团版本，包含 IXD 开场标识、冷色主题、40 份社团资料及保持画面的性能优化。保留上游 MIT 许可和版权署名。
+
+当前仓库保存 IXD 源码，尚未部署独立的 IXD 站点。运行 `npm ci`、`npm run dev` 后访问本地地址；构建使用 `npm run build`。Novecento 授权字体不随 Git 分发，缺少字体时沿用内置字形图稿。
+
+以下保留上游项目介绍、参考来源和操作文档，其中在线地址与历史截图属于原项目。
+
+## 上游项目：RHINE LAB · ANALYSIS OS
 
 **把莱茵生命的终端，做成可以操作的三维界面。**
 

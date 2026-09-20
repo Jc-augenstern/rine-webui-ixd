@@ -15,7 +15,7 @@
   position: absolute;
   inset: 0;
   display: block;
-  background: #20221d;
+  background: var(--theme-ink);
   will-change: transform;
 }
 

@@ -4,7 +4,7 @@
   filter: none;
 }
 #inspection-point {
-  fill: #24221f;
+  fill: var(--theme-ink);
 }
 .viewer-surface {
   position: absolute;
@@ -12,20 +12,20 @@
   right: 62px;
   z-index: 3;
   display: flex;
-  border: 1px solid #bcb6ac;
+  border: 1px solid var(--theme-line);
 }
 .viewer-surface button {
   padding: 10px 22px;
   font-size: 14px;
-  color: #626158;
+  color: var(--theme-muted);
   background: transparent;
 }
 .viewer-surface button + button {
-  border-left: 1px solid #bcb6ac;
+  border-left: 1px solid var(--theme-line);
 }
 .viewer-surface button[aria-pressed="true"] {
-  color: #f5f1e9;
-  background: #353b30;
+  color: var(--theme-paper);
+  background: var(--theme-ink);
 }
 .viewer-surface button:disabled {
   opacity: 0.45;

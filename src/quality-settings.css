@@ -4,7 +4,7 @@
   max-height: 950px;
   overflow-y: auto;
   scrollbar-gutter: stable;
-  scrollbar-color: #aca18d transparent;
+  scrollbar-color: var(--theme-line) transparent;
   scrollbar-width: thin;
 }
 .settings-modal .modal-bottom {
@@ -19,7 +19,7 @@
 }
 .quality-settings {
   margin-top: 24px;
-  border-bottom: 1px solid #c1b8a7;
+  border-bottom: 1px solid var(--theme-line);
 }
 .quality-heading {
   display: flex;
@@ -34,22 +34,22 @@
 }
 .quality-heading h3 span {
   margin-left: 18px;
-  color: #776f60;
+  color: var(--theme-muted);
   letter-spacing: 0;
 }
 .quality-settings select {
   font: inherit;
   font-size: 12px;
-  color: #393d32;
-  background: #e7e3d9;
-  border: 1px solid #bdb4a1;
+  color: var(--theme-ink);
+  background: var(--theme-field);
+  border: 1px solid var(--theme-line);
   border-radius: 0;
   padding: 9px 28px 9px 12px;
   min-width: 125px;
 }
 .quality-summary {
   font-size: 12px;
-  color: #6c6859;
+  color: var(--theme-muted);
   margin: 12px 0 20px;
   font-variant-numeric: tabular-nums;
 }
@@ -57,12 +57,12 @@
   cursor: pointer;
   font-size: 13px;
   padding: 15px 0;
-  border-top: 1px solid #c1b8a7;
+  border-top: 1px solid var(--theme-line);
 }
 .quality-advanced summary span {
   margin-left: 16px;
   font-size: 11px;
-  color: #807866;
+  color: var(--theme-muted);
 }
 .quality-grid {
   display: grid;
@@ -75,13 +75,13 @@
   justify-content: space-between;
   gap: 18px;
   padding: 15px 0;
-  border-top: 1px solid #d0c6b5;
+  border-top: 1px solid var(--theme-line);
   font-size: 13px;
 }
 .quality-control small {
   display: block;
   font-size: 10px;
-  color: #807866;
+  color: var(--theme-muted);
   margin-top: 7px;
   line-height: 1.5;
 }
@@ -102,7 +102,7 @@
 }
 .quality-range input {
   width: 250px;
-  accent-color: #565c46;
+  accent-color: var(--theme-accent);
   cursor: pointer;
 }
 .quality-range output {
@@ -114,10 +114,10 @@
 .quality-note {
   font-size: 11px;
   line-height: 1.8;
-  color: #807866;
+  color: var(--theme-muted);
   margin: 12px 0 18px;
 }
 .quality-settings :is(select, input, summary):focus-visible {
-  outline: 2px solid #a67d48;
+  outline: 2px solid var(--theme-accent);
   outline-offset: 4px;
 }

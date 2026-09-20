@@ -2,6 +2,7 @@ node_modules/
 backups/
 dist/
 .tools/
+.playwright-cli/
 *.mp4
 *.blend1
 optix7cache.db

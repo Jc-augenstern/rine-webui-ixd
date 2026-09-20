@@ -19,15 +19,15 @@ from fontTools.pens.transformPen import TransformPen
 from PIL import ImageFont
 
 PHRASES = [
-    ('brand', 'RHINE LAB', 'DemiBold'),
+    ('brand', 'IXD', 'DemiBold'),
     ('access', 'ACCESS PERMISSION REQUIRED', 'Normal'),
-    ('identity', 'ID CONFIRMED : JOYCE MOORE', 'Normal'),
+    ('identity', 'ID CONFIRMED : IXD USER', 'Normal'),
     ('request', 'REQUEST RECEIVED', 'Normal'),
     ('processing', 'START PROCESSING...', 'Normal'),
     ('processingGlitch', '              SING...', 'Normal'),
     ('permission', 'PERMISSION AUTHORIZED', 'Normal'),
     ('welcome', 'WELCOME TO', 'Bold'),
-    ('company', 'RHINE LAB.LLC.', 'Bold'),
+    ('company', 'IXD CLUB', 'Bold'),
     ('database', 'INTERNAL DATABASE', 'Bold'),
 ]
 

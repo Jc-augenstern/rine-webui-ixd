@@ -32,7 +32,7 @@
 }
 [data-ui-frost="true"] .frost-surface::after {
   opacity: 1;
-  background: rgba(var(--theme-paper-rgb, 234, 229, 225), var(--frost-tint, .35));
+  background: rgba(var(--theme-paper-rgb, 238, 242, 248), var(--frost-tint, .35));
   -webkit-backdrop-filter: blur(var(--frost-blur, 13px)) saturate(.8);
   backdrop-filter: blur(var(--frost-blur, 13px)) saturate(.8);
   box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 1px 0 rgba(0,0,0,.08);
@@ -67,14 +67,14 @@
 
 
 /* Text contrast over photography; keep the existing glass treatment. */
-#stage[data-custom-wallpaper-visible="true"] .system-footer { color: var(--theme-ink, #242622); }
+#stage[data-custom-wallpaper-visible="true"] .system-footer { color: var(--theme-ink, var(--theme-ink)); }
 #stage[data-custom-wallpaper-visible="true"] .system-footer .three-toggle[aria-pressed="false"] { opacity: 1; }
 
 #stage[data-custom-wallpaper-visible="true"] :is(.wb-nav button, .wb-task, .wb-muted, .wb-task-count, .wb-storage, .wb-media small, .wb-timer-label, .system-nav button, .relay-entry) {
-  color: var(--theme-ink, #242622);
+  color: var(--theme-ink, var(--theme-ink));
 }
 #stage[data-custom-wallpaper-visible="true"] :is(.wb-nav button, .wb-task, .system-nav button, .system-footer button, .relay-entry):hover {
-  color: var(--theme-ink, #242622);
+  color: var(--theme-ink, var(--theme-ink));
 }
 #clock { display: inline-flex; align-items: baseline; font-variant-numeric: tabular-nums; white-space: nowrap; }
 #clock > span { flex: none; }

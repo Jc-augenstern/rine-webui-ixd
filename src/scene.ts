@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { palette, scenePalette, lightSurfaces } from "./palette";
 import { ArchiveVisibility } from "./archive-visibility";
 import { InstanceUpdates } from "./instance-updates";
 import { RenderState } from "./render-state";
@@ -34,6 +35,7 @@ import {
   type ArchiveNavigation,
 } from "./archive-loop";
 import { labelMarkSvg } from "./brand";
+import { ixdInscriptionGeometry } from "./ixd-inscription";
 import { archiveFraming } from "./viewport-layout";
 import { ArchiveDrag, ArchivePlaneMomentum, type DragAxis, type DragProjection, type DragPosition } from "./archive-drag";
 import { assetUrl as publicAsset } from "./asset-url";
@@ -273,11 +275,11 @@ export class ArchiveScene {
     );
     container.appendChild(this.renderer.domElement);
     this.renderer.domElement.addEventListener('webglcontextrestored', () => this.renderState.invalidate(), { signal: this.inputEvents.signal });
-    this.scene.background = new THREE.Color("#eae5e1");
+    this.scene.background = new THREE.Color(palette.paper[0]);
     // The frame updates world matrices once after simulation; subsequent
     // beauty, normal, depth and transmission renders reuse those same matrices.
     this.scene.matrixWorldAutoUpdate = false;
-    this.scene.fog = new THREE.Fog("#eae5e1", 22, 47);
+    this.scene.fog = new THREE.Fog(scenePalette.mist[0], 22, 47);
     this.light = createArchiveLighting(this.renderer, this.scene, lightingLook);
     this.light.castShadow = true;
     Object.assign(this.light.shadow.camera, {
@@ -294,7 +296,7 @@ export class ArchiveScene {
     this.light.shadow.radius = 4;
     const floor = new THREE.Mesh(
       new THREE.PlaneGeometry(200, 200),
-      new THREE.MeshStandardMaterial({ color: "#d8c9b9", roughness: 0.95 }),
+      new THREE.MeshStandardMaterial({ color: scenePalette.floor[0], roughness: 0.95 }),
     );
     floor.rotation.x = -Math.PI / 2;
     floor.name = "archive-floor";
@@ -345,41 +347,44 @@ export class ArchiveScene {
       this.cells.push(cell);
     }
     for (const mesh of meshes) {
-      const geom = mesh.geometry
-        .clone()
-        .applyMatrix4(mesh.matrixWorld)
-        .scale(1, 1, 1);
       const source = mesh.material as THREE.MeshStandardMaterial;
       const name = source.name.replace(/\.\d+$/, "");
+      const geom = name === "Moulded_Lettering"
+        ? ixdInscriptionGeometry()
+        : mesh.geometry.clone().applyMatrix4(mesh.matrixWorld);
       const mat = source.clone() as THREE.MeshPhysicalMaterial;
       mat.envMapIntensity = 0.6;
+      if (lightSurfaces[name]) mat.color.set(lightSurfaces[name]);
+      if (name.includes('Orange')) mat.color.set(scenePalette.internalAccent);
+      if (name === 'Index_Inlay') mat.color.set(scenePalette.index);
+      if (name === 'Titanium_Fasteners') mat.color.set(scenePalette.fastener);
       if (name === "Frosted_Polymer") {
-        mat.color.set("#fffdfa");
+        mat.color.set(scenePalette.glass);
         mat.transmission = 0.9;
         mat.thickness = 0.12;
         mat.roughness = 0.21;
         mat.ior = 1.46;
-        mat.attenuationColor = new THREE.Color("#eee6df");
+        mat.attenuationColor = new THREE.Color(scenePalette.attenuation);
         mat.attenuationDistance = 2;
       }
       if (name === "Internal_Ceramic") {
-        mat.color.set(this.lightingLook === "refined" ? "#c4baae" : "#c7beb6");
+        mat.color.set(scenePalette.ceramic);
         mat.roughness = 0.6;
       }
-      if (name === "Printed_Label") mat.color.set("#eae5dc");
+      if (name === "Printed_Label") mat.color.set(palette.field[0]);
       if (name === "Ivory_Edges") {
-        mat.color.set("#f0e7df");
+        mat.color.set(scenePalette.edge);
         mat.roughness = 0.31;
         mat.transmission = 0.65;
         mat.thickness = 0.04;
       }
       if (name === "Optical_Diffuser") {
-        mat.color.set("#e2dad4");
+        mat.color.set(scenePalette.diffuser);
         mat.transmission = 0;
         mat.roughness = 0.7;
       }
       if (name === "Subsurface_Optics") {
-        mat.color.set(this.lightingLook === "refined" ? "#b9a796" : "#b9aba1");
+        mat.color.set(scenePalette.optics);
         mat.roughness = 0.48;
         mat.metalness = 0.05;
       }
@@ -387,7 +392,7 @@ export class ArchiveScene {
         // Internal refractive shoulders must be in the opaque capture: WebGL's
         // screen-space transmission cannot recursively sample another glass mesh.
         mat.transmission = 0;
-        mat.color.set(this.lightingLook === "refined" ? "#d8c7b5" : "#d4c7be");
+        mat.color.set(scenePalette.opticalEdge);
         mat.roughness = 0.26;
         mat.metalness = 0.08;
       }
@@ -416,14 +421,14 @@ export class ArchiveScene {
       if (name === "Frosted_Polymer") {
         arrayMat.transmission = 0.78;
         if (this.lightingLook === "refined") {
-          // Longer oblique paths pick up the warm body tint, while the thin
+          // Longer oblique paths pick up the cool body tint, while the thin
           // edges and the extracted clear cover retain a brighter response.
           arrayMat.thickness = 0.28;
-          arrayMat.attenuationColor.set("#d4c7b4");
+          arrayMat.attenuationColor.set(scenePalette.arrayAttenuation);
           arrayMat.attenuationDistance = 1.2;
         }
         arrayMat.transparent = false;
-        arrayMat.color.set("#fff7ed");
+        arrayMat.color.set(scenePalette.arrayGlass);
         arrayMat.onBeforeCompile = (shader) => {
           shader.vertexShader =
             "varying float vPanelHeight;\n" + shader.vertexShader;
@@ -435,23 +440,23 @@ export class ArchiveScene {
             "varying float vPanelHeight;\n" + shader.fragmentShader;
           shader.fragmentShader = shader.fragmentShader.replace(
             "#include <color_fragment>",
-            "#include <color_fragment>\ndiffuseColor.rgb *= mix(vec3(0.40, 0.30, 0.20), vec3(1.0, 0.98, 0.94), smoothstep(0.1, 1.0, vPanelHeight));",
+            `#include <color_fragment>\ndiffuseColor.rgb *= mix(${scenePalette.glassShade}, ${scenePalette.glassHighlight}, smoothstep(0.1, 1.0, vPanelHeight));`,
           );
         };
         arrayMat.roughness = 0.28;
         arrayMat.clearcoat = 0.3;
         arrayMat.clearcoatRoughness = 0.25;
       }
-      if (name === "Optical_Diffuser") arrayMat.color.set("#806447");
+      if (name === "Optical_Diffuser") arrayMat.color.set(scenePalette.arrayDiffuser);
       if (name === "Ivory_Edges") {
         arrayMat.transmission = 0;
         arrayMat.color.set(
-          this.lightingLook === "refined" ? "#dcc9b0" : "#fff5e9",
+          scenePalette.arrayEdge,
         );
         arrayMat.roughness = 0.38;
       }
       if (name === "Index_Inlay") {
-        arrayMat.color.set("#e4d6c5");
+        arrayMat.color.set(scenePalette.arrayIndex);
         arrayMat.metalness = 0.05;
       }
       this.appearance.register(name, mat, arrayMat);
@@ -514,7 +519,7 @@ export class ArchiveScene {
         "",
       );
       const mesh = new THREE.Mesh(
-        object.geometry.clone().applyMatrix4(object.matrixWorld),
+        name === "Moulded_Lettering" ? ixdInscriptionGeometry() : object.geometry.clone().applyMatrix4(object.matrixWorld),
         object.material,
       );
       mesh.userData.surface = name;
@@ -747,27 +752,27 @@ export class ArchiveScene {
   private drawLabel(index: number) {
     if (!this.labelTexture) return;
     const c = this.labelCanvas.getContext("2d")!;
-    c.fillStyle = "#e6e2d9";
+    c.fillStyle = palette.field[0];
     c.fillRect(0, 0, 1024, 440);
-    c.fillStyle = "#171713";
+    c.fillStyle = palette.ink[0];
     c.fillRect(12, 12, 1000, 6);
     c.fillRect(12, 419, 1000, 3);
     c.font = "bold 81px MiSans";
-    c.fillText("RHINE LAB, LLC.", 22, 116);
+    c.fillText("IXD", 22, 116);
     c.font = "32px MiSans";
-    c.fillStyle = "#878476";
+    c.fillStyle = palette.muted[0];
     c.fillText("INTERNAL DATABASE", 25, 174);
-    c.fillStyle = "#171713";
+    c.fillStyle = palette.ink[0];
     c.font = "bold 130px MiSans";
     c.fillText("NO." + String(index + 1).padStart(3, "0"), 22, 360);
     c.fillRect(782, 32, 221, 39);
-    c.fillStyle = "#eee9de";
+    c.fillStyle = palette.panel[0];
     c.font = "24px MiSans";
-    c.fillText("R L / I S", 809, 61);
-    c.fillStyle = "#171713";
+    c.fillText("I X D / I S", 809, 61);
+    c.fillStyle = palette.ink[0];
     c.font = "bold 64px MiSans";
     c.fillText("INFO", 830, 143);
-    c.drawImage(this.labelMark, 790, 242, 210, 98);
+    c.drawImage(this.labelMark, 838, 209, 126, 146);
     this.labelTexture.needsUpdate = true;
   }
   private ensureInstanceCapacity(required: number) {
@@ -1731,13 +1736,21 @@ export class ArchiveScene {
     if (this.superPerformance) this.renderer.render(this.scene, this.camera);
     else this.composer.render();
   }
-  projectCard(x: number, y: number) {
-    this.model.updateMatrixWorld(true);
-    const p = this.model
-      .localToWorld(new THREE.Vector3(x, y, 0.255))
-      .project(this.camera);
-    return [(p.x + 1) * this.container.clientWidth / 2, (1 - p.y) * this.container.clientHeight / 2];
-  }
+  private projectedCardPoint = new THREE.Vector3();
+  private projectionWidth = 0;
+  private projectionHeight = 0;
+  readonly cardProjection = {
+    prepare: (width: number, height: number) => {
+      this.model.updateWorldMatrix(true, false);
+      this.projectionWidth = width;
+      this.projectionHeight = height;
+    },
+    point: (x: number, y: number): [number, number] => {
+      const p = this.projectedCardPoint.set(x, y, .255)
+        .applyMatrix4(this.model.matrixWorld).project(this.camera);
+      return [(p.x + 1) * this.projectionWidth / 2, (1 - p.y) * this.projectionHeight / 2];
+    },
+  };
   get decryptionFrame() { return this.decryption.frame; }
   finishDecryption() { this.decryption.finish(); }
   get detailVisibility() {

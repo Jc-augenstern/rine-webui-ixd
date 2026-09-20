@@ -15,7 +15,7 @@ test("all forty downloads match the shared content, including the UTF-8 BOM", as
       (
         await readFile(
           new URL(
-            `../public/archives/RHINE-LAB-${record.id}.txt`,
+            `../public/archives/IXD-${record.id}.txt`,
             import.meta.url,
           ),
           "utf8",
@@ -65,7 +65,7 @@ const invalidCases = [
   [
     "unbalanced columns",
     (c) => {
-      c.records[0].category = c.columns[0];
+      c.records[0].category = c.columns.find(name => name !== c.records[0].category);
     },
     /八份档案/,
   ],
@@ -98,18 +98,18 @@ const invalidCases = [
     /findings/,
   ],
   [
-    "unsafe URL",
+    "missing source citation",
     (c) => {
-      c.records[0].source = "javascript:alert(1)";
+      c.records[0].source = "";
     },
-    /HTTPS/,
+    /source/,
   ],
   [
-    "invalid URL",
+    "non-text source citation",
     (c) => {
-      c.records[0].source = "example.com";
+      c.records[0].source = { document: "初稿" };
     },
-    /HTTPS/,
+    /source/,
   ],
   [
     "duplicate categories",

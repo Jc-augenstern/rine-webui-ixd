@@ -1,0 +1,48 @@
+async page => {
+  const errors = [];
+  page.on('pageerror', error => errors.push(error.message));
+  const assert = (value, message) => { if (!value) throw new Error(message); };
+  const seek = async time => page.locator('#seek').evaluate((el, value) => {
+    el.value = String(value); el.dispatchEvent(new Event('input'));
+  }, time);
+  await page.goto('http://127.0.0.1:5173/reference/ixd-motion.html');
+  await page.setViewportSize({ width: 1440, height: 960 });
+  await seek(3.2);
+  assert(await page.locator('#play').textContent() === '播放', 'Seek must pause playback');
+  assert(await page.locator('#status').textContent() === 'SYSTEM READY', 'Complete mark must reach ready state');
+  assert(await page.locator('[data-letter]').evaluateAll(els => els.every(el => el.style.opacity === '1')), 'All IXD letters must be visible');
+  assert(!await page.locator('body').innerText().then(text => /super/i.test(text)), 'No SUPER label');
+  await page.screenshot({ path: 'verification/ixd-desktop.png' });
+  await page.locator('#theme').click();
+  assert(await page.locator('.screen').evaluate(el => el.classList.contains('dark')), 'Dark preview');
+  await page.waitForTimeout(350);
+  await page.screenshot({ path: 'verification/ixd-dark.png' });
+  await page.locator('#pure').click();
+  assert(await page.locator('.brand').evaluate(el => getComputedStyle(el).visibility === 'hidden'), 'Pure mode hides context');
+  await page.locator('#pure').click();
+  await page.locator('#theme').click();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.waitForTimeout(350);
+  assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'No mobile horizontal overflow');
+  await page.screenshot({ path: 'verification/ixd-mobile.png' });
+  await page.locator('#replay').click();
+  await page.waitForFunction(() => Number(document.querySelector('#seek').value) > .2);
+  await page.locator('#play').click();
+  const paused = await page.locator('#seek').inputValue();
+  await page.waitForTimeout(180);
+  assert(await page.locator('#seek').inputValue() === paused, 'Pause freezes the timeline');
+  await page.locator('#loop').click();
+  await seek(4.7);
+  await page.locator('#play').click();
+  await page.waitForFunction(() => document.querySelector('#play').textContent === '播放');
+  assert(await page.locator('#seek').inputValue() === '4.8', 'Non-looping playback holds final mark');
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.reload();
+  await page.waitForFunction(() => document.querySelector('#seek').value === '3.2');
+  assert(await page.locator('#play').textContent() === '播放', 'Reduced motion starts paused at final mark');
+  assert(errors.length === 0, errors.join('\n'));
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await page.setViewportSize({ width: 1440, height: 960 });
+  await page.reload();
+  console.log('PASS: seeking, complete mark, IXD-only text, dark/pure modes, mobile overflow, replay, pause, end hold, reduced motion; no runtime errors.');
+}

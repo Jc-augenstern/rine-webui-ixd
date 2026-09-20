@@ -27,7 +27,7 @@ for route in [[(681,470),(681,899),(1061,899),(1061,821),(1310,821),(1310,464),(
     mould('Information substrate fine route',route,.014,.0018,core)
 
 # Embossed vertical company inscription belongs to the inner cover, not the ink label.
-inscription=text('Moulded vertical lettering','RHINE LAB, LLC.',0,0,.155,emboss)
+inscription=text('Moulded vertical lettering','IXD',0,0,.155,emboss)
 # Text baseline follows Blender local X; rotate it down the left edge in the X/Z plane.
 inscription.location=(-2.27,-.078,2.29)
 inscription.rotation_euler=(math.pi/2,math.pi/2,0)

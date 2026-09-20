@@ -1,10 +1,12 @@
 import * as THREE from "three";
 import { disposeThreeTree } from "./three-resources";
 import { themeEnvironment } from "./theme-material";
+import { palette, scenePalette } from "./palette";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { createArchiveLighting } from "./archive-lighting";
 import { damp } from "./motion";
 import { ViewerCameraMotion } from "./viewer-camera";
+import { RenderState } from "./render-state";
 import { normalizeQuality, type RenderQuality } from "./render-quality";
 import {
   applyTextureQuality,
@@ -30,6 +32,15 @@ type ModelSource = { model: THREE.Group; dispose: () => void; setClarity?: (valu
 export class ModelViewer {
   private themeAmount = 0;
   setTheme(value: number) { this.themeAmount = value; }
+  private appliedTheme = NaN;
+  private appliedClarity = NaN;
+  private renderState = new RenderState();
+  private renderedFrames = 0;
+  private reusedFrames = 0;
+  private statsPending = true;
+  private forceStats = true;
+  private lastStatsTime = -Infinity;
+  private renderedLastUpdate = false;
   readonly root: HTMLElement;
   private canvasHost: HTMLElement;
   private renderer: THREE.WebGLRenderer;
@@ -98,7 +109,7 @@ export class ModelViewer {
       <div class="scene-atmosphere viewer-atmosphere" aria-hidden="true"></div>
       <header class="viewer-header">
         <button class="viewer-back" data-viewer="close">← <span>返回档案</span><kbd>ESC</kbd></button>
-        <div class="viewer-heading"><span>RHINE LAB / OBJECT STUDY</span><h2 id="viewer-title">档案模型</h2><p id="viewer-file"></p></div>
+        <div class="viewer-heading"><span>IXD / OBJECT STUDY</span><h2 id="viewer-title">档案模型</h2><p id="viewer-file"></p></div>
         <span class="viewer-index">360<span>°</span></span>
       </header>
       <div class="viewer-surface" role="group" aria-label="玻璃模式"><button data-viewer="clear" aria-pressed="true">清晰</button><button data-viewer="frosted" aria-pressed="false">磨砂</button></div>
@@ -124,8 +135,8 @@ export class ModelViewer {
       "档案三维模型：拖动旋转，方向键平移，滚轮或加减键缩放，Home 复位",
     );
     this.canvasHost.appendChild(this.renderer.domElement);
-    this.scene.background = new THREE.Color("#eae5e1");
-    this.scene.fog = new THREE.Fog("#eae5e1", 13.5, 26.5);
+    this.scene.background = new THREE.Color(palette.paper[0]);
+    this.scene.fog = new THREE.Fog(scenePalette.mist[0], 13.5, 26.5);
     // Render-target textures belong to their WebGL context. Recreate the main
     // scene's light room here so this renderer receives its actual illumination.
     createArchiveLighting(this.renderer, this.scene);
@@ -155,6 +166,8 @@ export class ModelViewer {
     this.controls.update();
     this.cameraMotion.snap(this.controlCamera, this.controls.target);
     this.controls.addEventListener("start", () => this.interruptReset());
+    this.controls.addEventListener("change", () => this.invalidate(false));
+    this.renderer.domElement.addEventListener("webglcontextrestored", () => this.invalidate());
     this.root.addEventListener("click", (event) => {
       if (this.closing) return;
       const action = (event.target as HTMLElement).closest<HTMLElement>(
@@ -191,6 +204,7 @@ export class ModelViewer {
   ) {
     if (this.isOpen) return;
     this.isOpen = true;
+    this.invalidate();
     this.closing = false;
     this.reduced = reduced;
     this.provider = provider;
@@ -237,6 +251,9 @@ export class ModelViewer {
         return;
       }
       this.source = source;
+      this.appliedTheme = NaN;
+      this.appliedClarity = NaN;
+      this.invalidate();
       for (const part of PARTS) {
         const group = new THREE.Group();
         group.name = part.id;
@@ -365,7 +382,7 @@ export class ModelViewer {
   }
 
   private finishClose() {
-    // Keep rendering and retain modal focus until the visible exit completes.
+    // Retain the canvas and modal focus until the visible exit completes.
     this.isOpen = false;
     this.closing = false;
     this.root.hidden = true;
@@ -377,6 +394,8 @@ export class ModelViewer {
       this.source = undefined;
     }
     this.groups.clear();
+    this.invalidate();
+    this.publishStats(this.lastTime);
     this.siblings.forEach(({ node, inert }) => (node.inert = inert));
     this.siblings = [];
     this.opener?.focus({ preventScroll: true });
@@ -391,6 +410,7 @@ export class ModelViewer {
     }
   }
   private setSurface(clear: boolean) {
+    this.invalidate();
     this.targetClarity = clear ? 1 : 0;
     this.root.dataset.surface = clear ? "clear" : "frosted";
     this.root.querySelector('[data-viewer="clear"]')!.setAttribute("aria-pressed", String(clear));
@@ -398,6 +418,7 @@ export class ModelViewer {
     if (this.reduced) this.clarity = { value: this.targetClarity, velocity: 0 };
   }
   private setExploded(value: boolean) {
+    this.invalidate();
     this.targetSpread = value ? 1 : 0;
     this.root.dataset.exploded = String(value);
     this.root
@@ -418,6 +439,7 @@ export class ModelViewer {
     }
   }
   private resetView(animated = true) {
+    this.invalidate();
     this.controls.enabled = false;
     this.controls.enableDamping = false;
     this.controls.update();
@@ -530,6 +552,7 @@ export class ModelViewer {
 
   resize() {
     if (!this.isOpen) return;
+    this.invalidate();
     const width = this.canvasHost.clientWidth,
       height = this.canvasHost.clientHeight;
     resizeQuality(
@@ -552,15 +575,24 @@ export class ModelViewer {
 
   update(time: number) {
     if (!this.isOpen) return;
-    themeEnvironment(this.scene, this.renderer, this.themeAmount);
-    this.source?.model.traverse(child => { if (child.userData.themeAmount) child.userData.themeAmount.value = this.themeAmount; });
+    if (this.appliedTheme !== this.themeAmount) {
+      themeEnvironment(this.scene, this.renderer, this.themeAmount);
+      this.source?.model.traverse(child => { if (child.userData.themeAmount) child.userData.themeAmount.value = this.themeAmount; });
+      this.appliedTheme = this.themeAmount;
+    }
     const dt = Math.min(this.lastTime ? time - this.lastTime : 1 / 60, 0.05);
     this.lastTime = time;
+    const claritySettled = this.clarity.value === this.targetClarity;
+    const spreadSettled = this.spread.value === this.targetSpread;
+    const resetting = this.cameraMotion.resetting;
     if (this.source) {
       damp(this.clarity, this.targetClarity, 8, dt);
       if (Math.abs(this.clarity.value - this.targetClarity) < .0001 && Math.abs(this.clarity.velocity) < .001)
         this.clarity = { value: this.targetClarity, velocity: 0 };
-      this.source.setClarity?.(this.clarity.value);
+      if (this.appliedClarity !== this.clarity.value) {
+        this.source.setClarity?.(this.clarity.value);
+        this.appliedClarity = this.clarity.value;
+      }
       damp(this.spread, this.targetSpread, this.reduced ? 45 : 5.5, dt);
       if (
         Math.abs(this.spread.value - this.targetSpread) < 0.0001 &&
@@ -594,9 +626,72 @@ export class ModelViewer {
     const objectDistance = this.camera.position.length();
     fog.near = Math.max(0, objectDistance - 1);
     fog.far = objectDistance + 12;
-    if (this.quality.antialias === "smaa") this.pipeline.composer.render();
-    else this.renderer.render(this.scene, this.camera);
-    this.root.dataset.stats = JSON.stringify({
+    // Simulation keeps its original clock and damping. Compare the matrices
+    // and uniforms actually sent to the GPU, without snapping the camera or
+    // stopping transitions at an arbitrary visual tolerance.
+    const state = this.renderState;
+    this.camera.updateMatrixWorld();
+    this.scene.updateMatrixWorld();
+    state.begin();
+    state.floats(...this.camera.projectionMatrix.elements, ...this.camera.matrixWorldInverse.elements,
+      ...this.camera.position.toArray(), fog.near, fog.far);
+    // Environment interpolation also changes lights and background colors.
+    // Exact theme comparison keeps every such derived value invalidated.
+    state.add(this.themeAmount);
+    this.scene.traverse(object => {
+      state.add(object.id, Number(object.visible));
+      if (!(object instanceof THREE.Mesh)) return;
+      object.modelViewMatrix.multiplyMatrices(this.camera.matrixWorldInverse, object.matrixWorld);
+      object.normalMatrix.getNormalMatrix(object.modelViewMatrix);
+      state.floats(...object.modelViewMatrix.elements, ...object.normalMatrix.elements, ...object.matrixWorld.elements);
+      const materials = Array.isArray(object.material) ? object.material : [object.material];
+      state.add(object.geometry.id);
+      for (const material of materials) {
+        const mat = material as THREE.MeshPhysicalMaterial;
+        // Ignore material.version: Three changes it during transmission passes.
+        state.add(mat.uuid, mat.map?.uuid, mat.map?.version ?? 0);
+        state.floats(mat.opacity, mat.roughness, mat.metalness, mat.transmission,
+          mat.thickness, mat.attenuationDistance, mat.clearcoat, mat.clearcoatRoughness,
+          mat.color.r, mat.color.g, mat.color.b,
+          mat.attenuationColor?.r, mat.attenuationColor?.g, mat.attenuationColor?.b);
+      }
+      for (const name of ["appearance", "glassClarity", "themeAmount", "subduedIndex"])
+        state.floats(object.userData[name]?.value ?? 0);
+    });
+    const changed = state.end();
+    if (changed) {
+      if (this.quality.antialias === "smaa") this.pipeline.composer.render();
+      else this.renderer.render(this.scene, this.camera);
+      this.renderedFrames++;
+      this.statsPending = true;
+    } else this.reusedFrames++;
+    if ((this.renderedLastUpdate && !changed) ||
+        (!claritySettled && this.clarity.value === this.targetClarity) ||
+        (!spreadSettled && this.spread.value === this.targetSpread) ||
+        resetting !== this.cameraMotion.resetting) this.forceStats = true;
+    this.renderedLastUpdate = changed;
+    this.publishStats(time);
+  }
+
+  private invalidate(forceStats = true) {
+    this.renderState.invalidate();
+    this.statsPending = true;
+    this.forceStats ||= forceStats;
+  }
+
+  private publishStats(time: number) {
+    // Preserve timely ready/target/final states for accessibility and tests;
+    // intermediate diagnostics do not need to rewrite the DOM every frame.
+    if (!this.forceStats && (!this.statsPending || time - this.lastStatsTime < 0.25)) return;
+    this.root.dataset.stats = JSON.stringify(this.getStats());
+    this.lastStatsTime = time;
+    this.statsPending = false;
+    this.forceStats = false;
+  }
+
+  getStats() {
+    return {
+      open: this.isOpen,
       ready: Boolean(this.source),
       clarity: this.clarity.value,
       targetClarity: this.targetClarity,
@@ -617,6 +712,8 @@ export class ModelViewer {
         z: group.position.z,
         meshes: group.children.length,
       })),
-    });
+      renderedFrames: this.renderedFrames,
+      reusedFrames: this.reusedFrames,
+    };
   }
 }

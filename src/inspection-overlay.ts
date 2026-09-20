@@ -22,44 +22,61 @@ export class InspectionOverlay {
   private point =
     this.root.querySelector<SVGCircleElement>("#inspection-point")!;
   private label = document.querySelector<HTMLElement>("#inspection-text")!;
+  private labelValue = this.label.querySelector<HTMLElement>("strong")!;
+  private host = document.querySelector<HTMLElement>("#three-scene")!;
+  private cornerRects = SCAN_CORNERS.map(() => {
+    const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+    rect.setAttribute("width", "8");
+    rect.setAttribute("height", "8");
+    this.corners.append(rect);
+    return rect;
+  });
+
+  private attribute(node: Element, name: string, value: string) {
+    if (node.getAttribute(name) !== value) node.setAttribute(name, value);
+  }
+  private opacity(node: HTMLElement | SVGElement, value: number) {
+    const text = String(value);
+    if (node.style.opacity !== text) node.style.opacity = text;
+  }
 
   render(
     frame: DecryptionFrame,
-    project: (x: number, y: number) => number[],
+    projection: {
+      prepare(width: number, height: number): void;
+      point(x: number, y: number): readonly [number, number];
+    },
     showLabel: boolean,
   ) {
-    const host = document.querySelector<HTMLElement>("#three-scene")!;
-    this.root.setAttribute("viewBox", `0 0 ${host.clientWidth} ${host.clientHeight}`);
-    this.root.style.opacity =
-      frame.intervals.length || frame.markers > 0 || frame.point > 0
-        ? "1"
-        : "0";
-    this.root.dataset.phase = frame.phase;
-    this.root.dataset.referenceTime = frame.time.toFixed(3);
-    this.line.setAttribute(
-      "d",
-      inspectionSegments(frame)
-        .map(([a, b]) => `M${project(...a)}L${project(...b)}`)
-        .join(""),
-    );
-    this.corners.style.opacity = String(frame.markers);
-    this.corners.innerHTML =
-      frame.markers > 0
-        ? SCAN_CORNERS.map(([x, y]) => {
-            const [px, py] = project(x, y);
-            return `<rect x="${px - 4}" y="${py - 4}" width="8" height="8"/>`;
-          }).join("")
-        : "";
-    const [cx, cy] = project(
-      (SCAN_FROM[0] + SCAN_TO[0]) / 2,
-      (SCAN_FROM[1] + SCAN_TO[1]) / 2,
-    );
-    this.point.setAttribute("cx", String(cx));
-    this.point.setAttribute("cy", String(cy));
-    this.point.style.opacity = String(frame.point);
-    this.label.style.opacity = String(showLabel ? frame.label : 0);
-    this.label.querySelector<HTMLElement>("strong")!.style.opacity = String(
-      frame.labelValue,
-    );
+    const visible = Boolean(frame.intervals.length || frame.markers > 0 || frame.point > 0);
+    this.opacity(this.root, Number(visible));
+    this.attribute(this.root, "data-phase", frame.phase);
+    this.attribute(this.root, "data-reference-time", frame.time.toFixed(3));
+    this.opacity(this.label, showLabel ? frame.label : 0);
+    this.opacity(this.labelValue, frame.labelValue);
+    this.opacity(this.corners, frame.markers);
+    this.opacity(this.point, frame.point);
+    if (!visible) {
+      this.attribute(this.line, "d", "");
+      return;
+    }
+
+    // Invisible overlays do no layout reads or 3D projection. For visible
+    // marks, update the model matrix and read the viewport only once per frame.
+    const width = this.host.clientWidth, height = this.host.clientHeight;
+    this.attribute(this.root, "viewBox", `0 0 ${width} ${height}`);
+    projection.prepare(width, height);
+    this.attribute(this.line, "d", inspectionSegments(frame)
+      .map(([a, b]) => `M${projection.point(...a)}L${projection.point(...b)}`).join(""));
+    if (frame.markers > 0) SCAN_CORNERS.forEach(([x, y], i) => {
+      const [px, py] = projection.point(x, y);
+      this.attribute(this.cornerRects[i], "x", String(px - 4));
+      this.attribute(this.cornerRects[i], "y", String(py - 4));
+    });
+    if (frame.point > 0) {
+      const [cx, cy] = projection.point((SCAN_FROM[0] + SCAN_TO[0]) / 2, (SCAN_FROM[1] + SCAN_TO[1]) / 2);
+      this.attribute(this.point, "cx", String(cx));
+      this.attribute(this.point, "cy", String(cy));
+    }
   }
 }

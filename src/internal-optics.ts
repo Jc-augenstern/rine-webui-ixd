@@ -1,29 +1,30 @@
 import * as THREE from "three";
+import { opticalSurfaces } from "./palette";
 
 const surfaces: Record<
   string,
   { color: string; roughness: number; opacity: number; order: number }
 > = {
   Optical_Glass_Body: {
-    color: "#929894",
+    color: opticalSurfaces.Optical_Glass_Body,
     roughness: 0.38,
     opacity: 0.27,
     order: 20,
   },
   Optical_Glass_Roof: {
-    color: "#929b94",
+    color: opticalSurfaces.Optical_Glass_Roof,
     roughness: 0.34,
     opacity: 0.42,
     order: 24,
   },
   Optical_Glass_Edge: {
-    color: "#edf0e7",
+    color: opticalSurfaces.Optical_Glass_Edge,
     roughness: 0.19,
     opacity: 0.9,
     order: 28,
   },
   Optical_Bridge_Glass: {
-    color: "#a0aca2",
+    color: opticalSurfaces.Optical_Bridge_Glass,
     roughness: 0.32,
     opacity: 0.36,
     order: 26,

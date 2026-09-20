@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { scenePalette } from "./palette";
 import { glassRevealGLSL, frostedTransmissionGLSL, FROSTED_ROUGHNESS } from "./glass-reveal.ts";
 import { internalOpticsFragment } from "./internal-optics.ts";
 import { themeMaterial } from "./theme-material";
@@ -68,7 +69,7 @@ export class CardAppearance {
           );
           shader.fragmentShader = shader.fragmentShader.replace(
             "#include <color_fragment>",
-            "#include <color_fragment>\ndiffuseColor.rgb *= mix(mix(vec3(0.40, 0.30, 0.20), vec3(1.0, 0.98, 0.94), smoothstep(0.1, 1.0, vArchiveHeight)), vec3(1.0), archiveQuality);",
+            `#include <color_fragment>\ndiffuseColor.rgb *= mix(mix(${scenePalette.glassShade}, ${scenePalette.glassHighlight}, smoothstep(0.1, 1.0, vArchiveHeight)), vec3(1.0), archiveQuality);`,
           );
           shader.fragmentShader = shader.fragmentShader.replace(
             "#include <roughnessmap_fragment>",

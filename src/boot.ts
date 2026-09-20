@@ -1,5 +1,5 @@
 import { bootMotion } from "./boot-motion";
-import { bootMarkContour } from "./brand";
+import { IxdMotion } from "./ixd-mark";
 import { themeAmount } from "./theme-ui";
 import { BootLettering } from "./boot-lettering";
 
@@ -13,10 +13,7 @@ const arc = (r: number, start: number, sweep: number, x = 960, y = 540) => {
 
 export class BootSequence {
   private nodes: Map<string, HTMLElement> = new Map();
-  private contour: SVGPathElement;
-  private letters: SVGTextElement;
-  private plus: SVGPathElement;
-  private minus: SVGPathElement;
+  private logoMotion: IxdMotion;
   private brandLines: HTMLElement[];
   private scanPaths: SVGPathElement[];
   private orbitDots: SVGCircleElement[];
@@ -49,24 +46,8 @@ export class BootSequence {
       ".boot-white",
     ].forEach((s) => this.nodes.set(s, stage.querySelector<HTMLElement>(s)!));
     const mark = stage.querySelector<SVGSVGElement>(".boot-logo svg")!;
-    const original = mark.querySelector("path")!;
-    this.contour = original;
-    this.contour.setAttribute("d", bootMarkContour);
-    this.contour.setAttribute("pathLength", "1");
-    const symbols = mark.querySelector("path:not([pathLength])")!;
-    this.plus = document.createElementNS(ns, "path");
-    this.plus.setAttribute("d", "M44 70h50M69 45v50");
-    this.minus = document.createElementNS(ns, "path");
-    this.minus.setAttribute("d", "M219 70h44");
-    [this.plus, this.minus].forEach((p) => {
-      p.setAttribute("stroke", "currentColor");
-      p.setAttribute("stroke-width", "15");
-      mark.insertBefore(p, symbols);
-    });
-    symbols.remove();
-    this.letters = mark.querySelector("text")!;
-    this.letters.setAttribute("text-anchor", "start");
-    this.letters.setAttribute("x", "20");
+    this.logoMotion = new IxdMotion(mark);
+    this.logoMotion.render(0);
     this.brandLines = Array.from(
       stage.querySelector(".brand")!.children,
     ) as HTMLElement[];
@@ -82,13 +63,13 @@ export class BootSequence {
     this.satellites = Array.from({ length: 6 }, () => {
       const dot = document.createElementNS(ns, "circle");
       dot.classList.add("satellite-dot");
-      dot.setAttribute("fill", "#080a08");
+      dot.setAttribute("fill", "var(--theme-ink)");
       dot.setAttribute("stroke", "none");
       // Draw beneath the core so its large flashes naturally cover the orbit.
       this.core.parentElement!.insertBefore(dot, this.core);
       return dot;
     });
-    this.caps = ["#080a08", "#fff"].map((fill) => {
+    this.caps = ["var(--theme-ink)", "var(--theme-paper)"].map((fill) => {
       const cap = document.createElementNS(ns, "circle");
       cap.setAttribute("fill", fill);
       cap.setAttribute("stroke", "none");
@@ -104,7 +85,7 @@ export class BootSequence {
       el.replaceChildren(ink);
     });
     this.poweredHTML = this.el(".powered").innerHTML;
-    new BootLettering(this.brandLines[0], ["brand"]).setText("RHINE LAB");
+
     // Bind after collecting the original ring paths. Phrase artwork also has
     // SVG paths, and must never be included in the scan's animated geometry.
     this.accessLettering = new BootLettering(this.el(".access-text"), ["access"]);
@@ -116,9 +97,6 @@ export class BootSequence {
       [".welcome-heading", "welcome", "WELCOME TO"],
       [".welcome-database", "database", "INTERNAL DATABASE"],
     ] as const) new BootLettering(this.el(selector), [key]).setText(text);
-    this.companyInk.forEach((el) =>
-      new BootLettering(el.querySelector("span")!, ["company"]).setText("RHINE LAB.LLC."),
-    );
   }
   private el(selector: string) {
     return this.nodes.get(selector)!;
@@ -135,27 +113,9 @@ export class BootSequence {
     this.opacity(".boot-logo", s.logoOpacity);
     this.el(".boot-logo").style.transform =
       `translate(${s.logo.offsetX}px, 1px)`;
-    this.contour.style.strokeDasharray = `${s.logo.length} ${1 - s.logo.length}`;
-    this.contour.style.strokeDashoffset = String(-s.logo.start);
-    this.contour.setAttribute("stroke-width", String(s.logo.strokeWidth));
-    // Preserve the SVG text node once each revealed letter is in place. Replacing
-    // it every frame invalidates glyph rasterization under the moving HUD.
-    if (this.letters.textContent !== s.logoLetters)
-      this.letters.textContent = s.logoLetters;
-    this.plus.style.opacity = this.minus.style.opacity =
-      s.logo.symbolScale > 0 ? "1" : "0";
-    this.plus.setAttribute(
-      "transform",
-      `translate(${s.logo.plusX} 70) rotate(${s.logo.plusAngle}) scale(${s.logo.symbolScale}) translate(-69 -70)`,
-    );
-    this.minus.setAttribute(
-      "d",
-      `M${-s.logo.minusWidth / 2} 0h${s.logo.minusWidth}`,
-    );
-    this.minus.setAttribute(
-      "transform",
-      `translate(${s.logo.minusX} 70) scale(${s.logo.symbolScale})`,
-    );
+    // Run the approved IXD reveal on the existing boot clock. The original
+    // container still owns its size, position and slide toward the auth text.
+    this.logoMotion.render(t - 9.16);
     this.opacity(".auth-status", s.authOpacity);
     this.authLettering.setText(s.auth);
     this.opacity(".brand", 1);
@@ -166,17 +126,17 @@ export class BootSequence {
     });
     this.opacity(".powered", s.poweredLetters > 0);
     this.el(".powered").style.clipPath =
-      `inset(0 ${100 * (1 - s.poweredLetters / 19)}% 0 0)`;
+      `inset(0 ${100 * (1 - s.poweredLetters / "POWERED BY IXD".length)}% 0 0)`;
     this.opacity(".scan", s.scanVisible);
     if (s.scanVisible) this.renderScan(s);
     this.opacity(".welcome", s.welcomeVisible ? s.welcomeOpacity : 0);
     this.el(".welcome").style.transform = `scale(${s.welcomeScale})`;
     this.el(".welcome").style.filter =
-      `blur(${s.exitBlur}px) invert(${s.exit * 0.22}) sepia(${s.exit}) saturate(${1 + s.exit * 5}) hue-rotate(${s.exit * 115}deg)`;
+      `blur(${s.exitBlur}px)`;
     this.opacity(".welcome-panel", s.welcomePanel);
     this.opacity(".welcome-heading", 1);
     this.el(".welcome-heading").style.color =
-      themeAmount > .0001 ? "var(--theme-ink)" : `rgb(${255 * (1 - s.welcomeInk)} ${255 * (1 - s.welcomeInk)} ${255 * (1 - s.welcomeInk)})`;
+      themeAmount > .0001 ? "var(--theme-ink)" : `color-mix(in srgb, var(--theme-ink) ${s.welcomeInk * 100}%, var(--theme-panel))`;
     this.opacity(".welcome-company", s.companyVisible);
     this.el(".welcome-company").style.opacity = String(
       s.companyVisible ? (s.companyMask ? 0.65 : 1) : 0,

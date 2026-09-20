@@ -3,25 +3,28 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#e8e5e1">
-  <title>更新终端 · Rhine Lab</title>
+  <meta name="theme-color" content="#eef2f8">
+  <title>更新终端 · IXD</title>
   <style>
     * { box-sizing: border-box; }
-    body { margin: 0; padding: max(24px, env(safe-area-inset-top)) max(24px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(24px, env(safe-area-inset-left)); background: #e8e5e1; color: #20221d; font: 16px/1.8 "MiSans", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif; }
+    /* Standalone recovery page must work before the app bundle loads. */
+    body { margin: 0; padding: max(24px, env(safe-area-inset-top)) max(24px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(24px, env(safe-area-inset-left)); background: #eef2f8; color: #1c2638; font: 16px/1.8 "MiSans", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif; }
     main { max-width: 580px; margin: 10vh auto; }
-    .brand { font-size: 13px; letter-spacing: 2px; border-bottom: 1px solid #aaa496; padding-bottom: 20px; }
+    .brand { font-size: 13px; letter-spacing: 2px; border-bottom: 1px solid #c4cddd; padding-bottom: 20px; }
     h1 { font-size: 30px; font-weight: 600; margin: 36px 0 16px; }
-    p { color: #626456; }
-    button { border: 0; background: #30362a; color: #f1efdf; padding: 14px 24px; min-height: 48px; font: inherit; cursor: pointer; }
+    p { color: #5b687e; }
+    button { border: 0; background: #5657ce; color: #ffffff; padding: 14px 24px; min-height: 48px; font: inherit; cursor: pointer; }
+    button:focus-visible, a:focus-visible { outline: 2px solid #5657ce; outline-offset: 4px; }
+    a { color: #5657ce; }
     button:disabled { opacity: .65; cursor: wait; }
     a { color: inherit; text-underline-offset: 4px; }
     #status { min-height: 2em; margin: 20px 0; }
-    .help { font-size: 14px; border-top: 1px solid #aaa496; padding-top: 22px; }
+    .help { font-size: 14px; border-top: 1px solid #c4cddd; padding-top: 22px; }
   </style>
 </head>
 <body>
   <main>
-    <div class="brand">RHINE LAB / ANALYSIS OS</div>
+    <div class="brand">IXD / ANALYSIS OS</div>
     <h1>更新终端</h1>
     <p>如果刷新后仍然看到旧版，请在联网时更新完整资源。收藏与偏好会保留。</p>
     <button id="update">更新并返回 ↻</button>

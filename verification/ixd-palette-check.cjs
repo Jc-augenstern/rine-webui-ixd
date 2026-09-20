@@ -1,0 +1,91 @@
+async page => {
+  const errors = [];
+  page.on('pageerror', e => errors.push(e.message));
+  const assert = (ok, message) => { if (!ok) throw new Error(message); };
+  const capture = name => page.screenshot({ path: `verification/ixd-cool-${name}.png` });
+  const ready = () => page.waitForFunction(() => window.rhine?.stats().ready && !document.querySelector('#loading'));
+  const closeModal = async () => {
+    await page.locator('[data-action=close-modal]').click();
+    await page.waitForFunction(() => !document.querySelector('.terminal-modal'));
+  };
+  const theme = async mode => {
+    await page.locator('.settings-button').click();
+    await page.locator(`[data-color-theme=${mode}]`).click();
+    await page.waitForFunction(mode => getComputedStyle(document.documentElement).getPropertyValue('--theme-paper').trim() === (mode === 'dark' ? 'rgb(17, 23, 34)' : 'rgb(238, 242, 248)'), mode);
+    await page.waitForTimeout(450);
+    await capture(`settings-${mode}`);
+    await closeModal();
+  };
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('http://127.0.0.1:5173/?scene=archive');
+  await ready();
+  await theme('light');
+  await page.waitForTimeout(1500);
+  await capture('archive-light');
+  const label = await page.locator('.column-navigation strong').innerText();
+  await page.keyboard.press('ArrowRight');
+  await page.waitForTimeout(600);
+  assert(await page.locator('.column-navigation strong').innerText() !== label, 'Archive navigation updates');
+  for (const mode of ['light', 'dark']) {
+    if (mode === 'dark') await theme('dark');
+    await capture(`archive-${mode}`);
+    await page.locator('[data-action=search]').click();
+    await page.locator('#archive-search').fill('X-001');
+    await page.waitForTimeout(400);
+    await capture(`search-${mode}`);
+    assert(await page.locator('.result-row').count() > 0, 'Search results remain usable');
+    await closeModal();
+    await page.locator('[data-action=saved]').click();
+    await page.waitForTimeout(350);
+    await capture(`saved-${mode}`);
+    await closeModal();
+    await page.locator('.read-file').click();
+    await page.waitForFunction(() => window.rhine.stats().mode === 'detail' && window.rhine.stats().decryption.clarity > .99);
+    await page.waitForTimeout(500);
+    await capture(`detail-${mode}`);
+    await page.locator('[data-action=bookmark]').click();
+    await page.waitForTimeout(250);
+    await page.locator('[data-action=bookmark]').click();
+    await page.locator('[data-tab=notes]').click();
+    await page.waitForTimeout(200);
+    await page.locator('[data-action=model-viewer]').click();
+    await page.waitForFunction(() => document.querySelector('.model-viewer')?.getAttribute('data-transition') === 'open' && document.querySelector('.viewer-loading')?.hidden);
+    await page.waitForTimeout(500);
+    await capture(`viewer-${mode}`);
+    await page.locator('[data-viewer=frosted]').click();
+    await page.locator('[data-viewer=explode]').click();
+    await page.waitForTimeout(900);
+    await capture(`viewer-exploded-${mode}`);
+    await page.locator('[data-viewer=assemble]').click();
+    await page.locator('[data-viewer=clear]').click();
+    await page.locator('[data-viewer=close]').click();
+    await page.waitForTimeout(300);
+    await page.locator('[data-action=back]').click();
+    await page.waitForFunction(() => window.rhine.stats().mode === 'archive');
+    await page.waitForTimeout(1200);
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.waitForTimeout(400);
+    assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'No mobile overflow');
+    await capture(`mobile-${mode}`);
+    await page.setViewportSize({ width: 1440, height: 900 });
+  }
+  await theme('light');
+  for (const [time, name] of [[5.4, 'drawing'], [7.4, 'auth'], [15.4, 'scan'], [20.5, 'welcome'], [21.75, 'exit']]) {
+    await page.goto(`http://127.0.0.1:5173/?time=${time}&freeze=1`);
+    await ready();
+    await capture(name);
+  }
+  await page.goto('http://127.0.0.1:5173/');
+  await page.waitForFunction(() => window.rhine?.stats().ready);
+  await capture('entry');
+  assert(await page.locator('#loading').evaluate(el => getComputedStyle(el).backgroundColor) === 'rgb(238, 242, 248)', 'Entry background matches');
+  await page.locator('.entry-start').click();
+  await ready();
+  await page.waitForFunction(() => window.rhine.stats().startup === 'started');
+  await page.locator('#skip').click();
+  await page.waitForFunction(() => window.rhine.stats().mode === 'archive');
+  await page.locator('[data-action=replay]').click();
+  await page.waitForFunction(() => window.rhine.stats().mode === 'boot');
+  assert(errors.length === 0, errors.join('\n'));
+  console.log('PASS: light/dark, archive navigation, search/saved/settings, detail/decryption, bookmark, viewer clear/frost/explode/assemble, mobile, boot frames, entry/skip/replay. No runtime errors.');
+}

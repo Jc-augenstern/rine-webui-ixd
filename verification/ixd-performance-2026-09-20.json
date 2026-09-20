@@ -1,0 +1,1713 @@
+{
+  "date": "2026-09-20",
+  "viewport": "1920x1080 DPR1",
+  "browser": "153.0.8010.48",
+  "serviceWorkers": "blocked for render isolation",
+  "results": [
+    {
+      "name": "preview-loop",
+      "elapsed": 6002.399999999907,
+      "frames": 1024,
+      "frameP50": 3.400000000000091,
+      "frameP95": 13.400000000000546,
+      "over33": 0,
+      "initial": null,
+      "final": null,
+      "renders": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "longTasks": [],
+      "gpu": null,
+      "canvases": [],
+      "domNodes": 83,
+      "metrics": {
+        "TaskDuration": 1.1970010000000002,
+        "ScriptDuration": 0.175731,
+        "LayoutDuration": 0.24041099999999999,
+        "RecalcStyleDuration": 0.11763299999999999,
+        "LayoutCount": 1025,
+        "RecalcStyleCount": 1025
+      },
+      "heapMiB": 1.4265403747558594,
+      "resourceCount": 24,
+      "resourceMiB": 1.1622858047485352,
+      "largest": [
+        {
+          "name": "src/fonts.css",
+          "bytes": 588183,
+          "transfer": 588483,
+          "duration": 45.200000000186265
+        },
+        {
+          "name": "@vite/client",
+          "bytes": 179008,
+          "transfer": 179308,
+          "duration": 38.700000000186265
+        },
+        {
+          "name": "bold/0.woff2",
+          "bytes": 41840,
+          "transfer": 42140,
+          "duration": 150.79999999981374
+        },
+        {
+          "name": "regular/30.woff2",
+          "bytes": 38512,
+          "transfer": 38812,
+          "duration": 48.5
+        },
+        {
+          "name": "regular/0.woff2",
+          "bytes": 36932,
+          "transfer": 37232,
+          "duration": 150.89999999990687
+        },
+        {
+          "name": "regular/25.woff2",
+          "bytes": 33552,
+          "transfer": 33852,
+          "duration": 66.89999999990687
+        },
+        {
+          "name": "regular/24.woff2",
+          "bytes": 31788,
+          "transfer": 32088,
+          "duration": 63.700000000186265
+        }
+      ]
+    },
+    {
+      "name": "preview-paused",
+      "elapsed": 6002.200000000186,
+      "frames": 1799,
+      "frameP50": 3.3000000000010914,
+      "frameP95": 3.400000000001455,
+      "over33": 0,
+      "initial": null,
+      "final": null,
+      "renders": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "longTasks": [],
+      "gpu": null,
+      "canvases": [],
+      "domNodes": 83,
+      "metrics": {
+        "TaskDuration": 0.17324700000000015,
+        "ScriptDuration": 0.02754200000000001,
+        "LayoutDuration": 0,
+        "RecalcStyleDuration": 0,
+        "LayoutCount": 0,
+        "RecalcStyleCount": 0
+      },
+      "heapMiB": 2.051036834716797,
+      "resourceCount": 24,
+      "resourceMiB": 1.1622858047485352,
+      "largest": [
+        {
+          "name": "src/fonts.css",
+          "bytes": 588183,
+          "transfer": 588483,
+          "duration": 45.200000000186265
+        },
+        {
+          "name": "@vite/client",
+          "bytes": 179008,
+          "transfer": 179308,
+          "duration": 38.700000000186265
+        },
+        {
+          "name": "bold/0.woff2",
+          "bytes": 41840,
+          "transfer": 42140,
+          "duration": 150.79999999981374
+        },
+        {
+          "name": "regular/30.woff2",
+          "bytes": 38512,
+          "transfer": 38812,
+          "duration": 48.5
+        },
+        {
+          "name": "regular/0.woff2",
+          "bytes": 36932,
+          "transfer": 37232,
+          "duration": 150.89999999990687
+        },
+        {
+          "name": "regular/25.woff2",
+          "bytes": 33552,
+          "transfer": 33852,
+          "duration": 66.89999999990687
+        },
+        {
+          "name": "regular/24.woff2",
+          "bytes": 31788,
+          "transfer": 32088,
+          "duration": 63.700000000186265
+        }
+      ]
+    },
+    {
+      "name": "production-archive-idle",
+      "elapsed": 6018.5,
+      "frames": 490,
+      "frameP50": 6.700000000000728,
+      "frameP95": 17,
+      "over33": 3,
+      "initial": {
+        "rendered": 99,
+        "reused": 0,
+        "calls": 75,
+        "triangles": 4272997,
+        "cards": 316,
+        "candidates": 456,
+        "superPerformance": false,
+        "selection": "settled"
+      },
+      "final": {
+        "rendered": 589,
+        "reused": 0,
+        "calls": 75,
+        "triangles": 4285785,
+        "cards": 317,
+        "candidates": 458,
+        "superPerformance": false,
+        "selection": "settled"
+      },
+      "renders": [
+        {
+          "rendered": 167,
+          "reused": 0,
+          "calls": 75,
+          "triangles": 4272997,
+          "cards": 316,
+          "candidates": 459,
+          "superPerformance": false,
+          "selection": "settled"
+        },
+        {
+          "rendered": 229,
+          "reused": 0,
+          "calls": 75,
+          "triangles": 4298573,
+          "cards": 318,
+          "candidates": 458,
+          "superPerformance": false,
+          "selection": "settled"
+        },
+        {
+          "rendered": 293,
+          "reused": 0,
+          "calls": 75,
+          "triangles": 4272997,
+          "cards": 316,
+          "candidates": 458,
+          "superPerformance": false,
+          "selection": "settled"
+        },
+        {
+          "rendered": 338,
+          "reused": 0,
+          "calls": 75,
+          "triangles": 4285785,
+          "cards": 317,
+          "candidates": 459,
+          "superPerformance": false,
+          "selection": "settled"
+        },
+        {
+          "rendered": 362,
+          "reused": 0,
+          "calls": 75,
+          "triangles": 4272997,
+          "cards": 316,
+          "candidates": 458,
+          "superPerformance": false,
+          "selection": "settled"
+        },
+        {
+          "rendered": 370,
+          "reused": 0,
+          "calls": 75,
+          "triangles": 4260209,
+          "cards": 315,
+          "candidates": 458,
+          "superPerformance": false,
+          "selection": "settled"
+        },
+        {
+          "rendered": 433,
+          "reused": 0,
+          "calls": 75,
+          "triangles": 4272997,
+          "cards": 316,
+          "candidates": 458,
+          "superPerformance": false,
+          "selection": "settled"
+        },
+        {
+          "rendered": 495,
+          "reused": 0,
+          "calls": 75,
+          "triangles": 4260209,
+          "cards": 315,
+          "candidates": 458,
+          "superPerformance": false,
+          "selection": "settled"
+        },
+        {
+          "rendered": 550,
+          "reused": 0,
+          "calls": 75,
+          "triangles": 4272997,
+          "cards": 316,
+          "candidates": 458,
+          "superPerformance": false,
+          "selection": "settled"
+        },
+        {
+          "rendered": 587,
+          "reused": 0,
+          "calls": 75,
+          "triangles": 4285785,
+          "cards": 317,
+          "candidates": 458,
+          "superPerformance": false,
+          "selection": "settled"
+        }
+      ],
+      "longTasks": [
+        {
+          "start": 11312.399999999907,
+          "duration": 1697
+        }
+      ],
+      "gpu": "ANGLE (NVIDIA, NVIDIA GeForce RTX 5070 Ti Laptop GPU (0x00002F18) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+      "canvases": [
+        {
+          "width": 1920,
+          "height": 1080
+        }
+      ],
+      "domNodes": 839,
+      "metrics": {
+        "TaskDuration": 4.4787099999999995,
+        "ScriptDuration": 3.6409949999999993,
+        "LayoutDuration": 0.048109999999999986,
+        "RecalcStyleDuration": 0.072073,
+        "LayoutCount": 997,
+        "RecalcStyleCount": 1251
+      },
+      "heapMiB": 16.431533813476562,
+      "resourceCount": 19,
+      "resourceMiB": 5.306214332580566,
+      "largest": [
+        {
+          "name": "assets/archive-cassette.dda42b9b3b471d11.glb",
+          "bytes": 3565116,
+          "transfer": 3565416,
+          "duration": 98.70000000018626
+        },
+        {
+          "name": "assets/index-BZKjcaU2.js",
+          "bytes": 1028976,
+          "transfer": 312429,
+          "duration": 270.5
+        },
+        {
+          "name": "assets/index-CVN8YLwU.css",
+          "bytes": 666746,
+          "transfer": 206096,
+          "duration": 76.89999999990687
+        },
+        {
+          "name": "bold/0.woff2",
+          "bytes": 41840,
+          "transfer": 42140,
+          "duration": 1665.3999999999069
+        },
+        {
+          "name": "demibold/0.woff2",
+          "bytes": 41404,
+          "transfer": 41704,
+          "duration": 1667.1999999997206
+        },
+        {
+          "name": "light/0.woff2",
+          "bytes": 41164,
+          "transfer": 41464,
+          "duration": 1666.6000000000931
+        },
+        {
+          "name": "regular/0.woff2",
+          "bytes": 36932,
+          "transfer": 37232,
+          "duration": 1666.3999999999069
+        }
+      ]
+    },
+    {
+      "name": "production-archive-navigation",
+      "elapsed": 6071,
+      "frames": 169,
+      "frameP50": 26.700000000000728,
+      "frameP95": 109.79999999999927,
+      "over33": 49,
+      "initial": {
+        "rendered": 599,
+        "reused": 0,
+        "calls": 75,
+        "triangles": 4285785,
+        "cards": 317,
+        "candidates": 458,
+        "superPerformance": false,
+        "selection": "settled"
+      },
+      "final": {
+        "rendered": 768,
+        "reused": 0,
+        "calls": 381,
+        "triangles": 5575349,
+        "cards": 309,
+        "candidates": 457,
+        "superPerformance": false,
+        "selection": "wave"
+      },
+      "renders": [
+        {
+          "rendered": 631,
+          "reused": 0,
+          "calls": 126,
+          "triangles": 4504975,
+          "cards": 316,
+          "candidates": 458,
+          "superPerformance": false,
+          "selection": "wave"
+        },
+        {
+          "rendered": 638,
+          "reused": 0,
+          "calls": 177,
+          "triangles": 4736953,
+          "cards": 316,
+          "candidates": 458,
+          "superPerformance": false,
+          "selection": "wave"
+        },
+        {
+          "rendered": 647,
+          "reused": 0,
+          "calls": 228,
+          "triangles": 4930567,
+          "cards": 313,
+          "candidates": 458,
+          "superPerformance": false,
+          "selection": "wave"
+        },
+        {
+          "rendered": 656,
+          "reused": 0,
+          "calls": 279,
+          "triangles": 5175333,
+          "cards": 314,
+          "candidates": 458,
+          "superPerformance": false,
+          "selection": "wave"
+        },
+        {
+          "rendered": 669,
+          "reused": 0,
+          "calls": 330,
+          "triangles": 5381735,
+          "cards": 312,
+          "candidates": 458,
+          "superPerformance": false,
+          "selection": "wave"
+        },
+        {
+          "rendered": 685,
+          "reused": 0,
+          "calls": 381,
+          "triangles": 5575349,
+          "cards": 309,
+          "candidates": 455,
+          "superPerformance": false,
+          "selection": "wave"
+        },
+        {
+          "rendered": 702,
+          "reused": 0,
+          "calls": 432,
+          "triangles": 5832903,
+          "cards": 311,
+          "candidates": 457,
+          "superPerformance": false,
+          "selection": "wave"
+        },
+        {
+          "rendered": 715,
+          "reused": 0,
+          "calls": 381,
+          "triangles": 5588137,
+          "cards": 310,
+          "candidates": 456,
+          "superPerformance": false,
+          "selection": "wave"
+        },
+        {
+          "rendered": 731,
+          "reused": 0,
+          "calls": 381,
+          "triangles": 5600925,
+          "cards": 311,
+          "candidates": 456,
+          "superPerformance": false,
+          "selection": "wave"
+        },
+        {
+          "rendered": 741,
+          "reused": 0,
+          "calls": 381,
+          "triangles": 5575349,
+          "cards": 309,
+          "candidates": 455,
+          "superPerformance": false,
+          "selection": "wave"
+        },
+        {
+          "rendered": 751,
+          "reused": 0,
+          "calls": 381,
+          "triangles": 5575349,
+          "cards": 309,
+          "candidates": 456,
+          "superPerformance": false,
+          "selection": "wave"
+        },
+        {
+          "rendered": 759,
+          "reused": 0,
+          "calls": 381,
+          "triangles": 5575349,
+          "cards": 309,
+          "candidates": 459,
+          "superPerformance": false,
+          "selection": "wave"
+        }
+      ],
+      "longTasks": [
+        {
+          "start": 15515,
+          "duration": 51
+        },
+        {
+          "start": 16446.30000000028,
+          "duration": 56
+        },
+        {
+          "start": 19561.899999999907,
+          "duration": 56
+        },
+        {
+          "start": 20464.5,
+          "duration": 56
+        }
+      ],
+      "gpu": "ANGLE (NVIDIA, NVIDIA GeForce RTX 5070 Ti Laptop GPU (0x00002F18) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+      "canvases": [
+        {
+          "width": 1920,
+          "height": 1080
+        }
+      ],
+      "domNodes": 910,
+      "metrics": {
+        "TaskDuration": 3.9078359999999996,
+        "ScriptDuration": 2.5960470000000004,
+        "LayoutDuration": 0.1449450000000001,
+        "RecalcStyleDuration": 0.16797400000000007,
+        "LayoutCount": 540,
+        "RecalcStyleCount": 577
+      },
+      "heapMiB": 15.304790496826172,
+      "resourceCount": 21,
+      "resourceMiB": 5.354790687561035,
+      "largest": [
+        {
+          "name": "assets/archive-cassette.dda42b9b3b471d11.glb",
+          "bytes": 3565116,
+          "transfer": 3565416,
+          "duration": 98.70000000018626
+        },
+        {
+          "name": "assets/index-BZKjcaU2.js",
+          "bytes": 1028976,
+          "transfer": 312429,
+          "duration": 270.5
+        },
+        {
+          "name": "assets/index-CVN8YLwU.css",
+          "bytes": 666746,
+          "transfer": 206096,
+          "duration": 76.89999999990687
+        },
+        {
+          "name": "bold/0.woff2",
+          "bytes": 41840,
+          "transfer": 42140,
+          "duration": 1665.3999999999069
+        },
+        {
+          "name": "demibold/0.woff2",
+          "bytes": 41404,
+          "transfer": 41704,
+          "duration": 1667.1999999997206
+        },
+        {
+          "name": "light/0.woff2",
+          "bytes": 41164,
+          "transfer": 41464,
+          "duration": 1666.6000000000931
+        },
+        {
+          "name": "regular/0.woff2",
+          "bytes": 36932,
+          "transfer": 37232,
+          "duration": 1666.3999999999069
+        }
+      ]
+    },
+    {
+      "name": "production-detail-idle",
+      "elapsed": 6017,
+      "frames": 468,
+      "frameP50": 13.299999999995634,
+      "frameP95": 19.89999999999418,
+      "over33": 0,
+      "initial": {
+        "rendered": 1602,
+        "reused": 0,
+        "calls": 75,
+        "triangles": 2201341,
+        "cards": 154,
+        "candidates": 273,
+        "superPerformance": false,
+        "selection": "settled"
+      },
+      "final": {
+        "rendered": 2070,
+        "reused": 0,
+        "calls": 75,
+        "triangles": 2201341,
+        "cards": 154,
+        "candidates": 273,
+        "superPerformance": false,
+        "selection": "settled"
+      },
+      "renders": [
+        {
+          "rendered": 1641,
+          "reused": 0,
+          "calls": 75,
+          "triangles": 2201341,
+          "cards": 154,
+          "candidates": 273,
+          "superPerformance": false,
+          "selection": "settled"
+        },
+        {
+          "rendered": 1682,
+          "reused": 0,
+          "calls": 75,
+          "triangles": 2201341,
+          "cards": 154,
+          "candidates": 273,
+          "superPerformance": false,
+          "selection": "settled"
+        },
+        {
+          "rendered": 1723,
+          "reused": 0,
+          "calls": 75,
+          "triangles": 2201341,
+          "cards": 154,
+          "candidates": 273,
+          "superPerformance": false,
+          "selection": "settled"
+        },
+        {
+          "rendered": 1756,
+          "reused": 0,
+          "calls": 75,
+          "triangles": 2201341,
+          "cards": 154,
+          "candidates": 273,
+          "superPerformance": false,
+          "selection": "settled"
+        },
+        {
+          "rendered": 1788,
+          "reused": 0,
+          "calls": 75,
+          "triangles": 2201341,
+          "cards": 154,
+          "candidates": 273,
+          "superPerformance": false,
+          "selection": "settled"
+        },
+        {
+          "rendered": 1819,
+          "reused": 0,
+          "calls": 75,
+          "triangles": 2201341,
+          "cards": 154,
+          "candidates": 273,
+          "superPerformance": false,
+          "selection": "settled"
+        },
+        {
+          "rendered": 1853,
+          "reused": 0,
+          "calls": 75,
+          "triangles": 2201341,
+          "cards": 154,
+          "candidates": 273,
+          "superPerformance": false,
+          "selection": "settled"
+        },
+        {
+          "rendered": 1885,
+          "reused": 0,
+          "calls": 75,
+          "triangles": 2201341,
+          "cards": 154,
+          "candidates": 273,
+          "superPerformance": false,
+          "selection": "settled"
+        },
+        {
+          "rendered": 1915,
+          "reused": 0,
+          "calls": 75,
+          "triangles": 2201341,
+          "cards": 154,
+          "candidates": 273,
+          "superPerformance": false,
+          "selection": "settled"
+        },
+        {
+          "rendered": 1949,
+          "reused": 0,
+          "calls": 75,
+          "triangles": 2201341,
+          "cards": 154,
+          "candidates": 273,
+          "superPerformance": false,
+          "selection": "settled"
+        },
+        {
+          "rendered": 1989,
+          "reused": 0,
+          "calls": 75,
+          "triangles": 2201341,
+          "cards": 154,
+          "candidates": 273,
+          "superPerformance": false,
+          "selection": "settled"
+        },
+        {
+          "rendered": 2025,
+          "reused": 0,
+          "calls": 75,
+          "triangles": 2201341,
+          "cards": 154,
+          "candidates": 273,
+          "superPerformance": false,
+          "selection": "settled"
+        },
+        {
+          "rendered": 2065,
+          "reused": 0,
+          "calls": 75,
+          "triangles": 2201341,
+          "cards": 154,
+          "candidates": 273,
+          "superPerformance": false,
+          "selection": "settled"
+        }
+      ],
+      "longTasks": [],
+      "gpu": "ANGLE (NVIDIA, NVIDIA GeForce RTX 5070 Ti Laptop GPU (0x00002F18) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+      "canvases": [
+        {
+          "width": 1920,
+          "height": 1080
+        }
+      ],
+      "domNodes": 815,
+      "metrics": {
+        "TaskDuration": 4.796818999999996,
+        "ScriptDuration": 3.549906,
+        "LayoutDuration": 0.11291699999999993,
+        "RecalcStyleDuration": 0.160339,
+        "LayoutCount": 958,
+        "RecalcStyleCount": 1164
+      },
+      "heapMiB": 24.113243103027344,
+      "resourceCount": 31,
+      "resourceMiB": 7.01551628112793,
+      "largest": [
+        {
+          "name": "assets/archive-cassette.dda42b9b3b471d11.glb",
+          "bytes": 3565116,
+          "transfer": 3565416,
+          "duration": 98.70000000018626
+        },
+        {
+          "name": "assets/index-BZKjcaU2.js",
+          "bytes": 1028976,
+          "transfer": 312429,
+          "duration": 270.5
+        },
+        {
+          "name": "audio/motif.ogg",
+          "bytes": 674580,
+          "transfer": 674880,
+          "duration": 48
+        },
+        {
+          "name": "assets/index-CVN8YLwU.css",
+          "bytes": 666746,
+          "transfer": 206096,
+          "duration": 76.89999999990687
+        },
+        {
+          "name": "audio/atmosphere.ogg",
+          "bytes": 537407,
+          "transfer": 537707,
+          "duration": 43
+        },
+        {
+          "name": "audio/pulse.ogg",
+          "bytes": 371667,
+          "transfer": 371967,
+          "duration": 40.799999999813735
+        },
+        {
+          "name": "bold/0.woff2",
+          "bytes": 41840,
+          "transfer": 42140,
+          "duration": 1665.3999999999069
+        }
+      ]
+    },
+    {
+      "name": "production-viewer-idle",
+      "elapsed": 6004.899999999907,
+      "frames": 646,
+      "frameP50": 9.900000000001455,
+      "frameP95": 13.5,
+      "over33": 0,
+      "initial": {
+        "rendered": 2081,
+        "reused": 0,
+        "calls": 75,
+        "triangles": 2201341,
+        "cards": 154,
+        "candidates": 273,
+        "superPerformance": false,
+        "selection": "settled"
+      },
+      "final": {
+        "rendered": 2081,
+        "reused": 0,
+        "calls": 75,
+        "triangles": 2201341,
+        "cards": 154,
+        "candidates": 273,
+        "superPerformance": false,
+        "selection": "settled"
+      },
+      "renders": [
+        {
+          "rendered": 2081,
+          "reused": 0,
+          "calls": 75,
+          "triangles": 2201341,
+          "cards": 154,
+          "candidates": 273,
+          "superPerformance": false,
+          "selection": "settled"
+        },
+        {
+          "rendered": 2081,
+          "reused": 0,
+          "calls": 75,
+          "triangles": 2201341,
+          "cards": 154,
+          "candidates": 273,
+          "superPerformance": false,
+          "selection": "settled"
+        },
+        {
+          "rendered": 2081,
+          "reused": 0,
+          "calls": 75,
+          "triangles": 2201341,
+          "cards": 154,
+          "candidates": 273,
+          "superPerformance": false,
+          "selection": "settled"
+        },
+        {
+          "rendered": 2081,
+          "reused": 0,
+          "calls": 75,
+          "triangles": 2201341,
+          "cards": 154,
+          "candidates": 273,
+          "superPerformance": false,
+          "selection": "settled"
+        },
+        {
+          "rendered": 2081,
+          "reused": 0,
+          "calls": 75,
+          "triangles": 2201341,
+          "cards": 154,
+          "candidates": 273,
+          "superPerformance": false,
+          "selection": "settled"
+        },
+        {
+          "rendered": 2081,
+          "reused": 0,
+          "calls": 75,
+          "triangles": 2201341,
+          "cards": 154,
+          "candidates": 273,
+          "superPerformance": false,
+          "selection": "settled"
+        },
+        {
+          "rendered": 2081,
+          "reused": 0,
+          "calls": 75,
+          "triangles": 2201341,
+          "cards": 154,
+          "candidates": 273,
+          "superPerformance": false,
+          "selection": "settled"
+        },
+        {
+          "rendered": 2081,
+          "reused": 0,
+          "calls": 75,
+          "triangles": 2201341,
+          "cards": 154,
+          "candidates": 273,
+          "superPerformance": false,
+          "selection": "settled"
+        },
+        {
+          "rendered": 2081,
+          "reused": 0,
+          "calls": 75,
+          "triangles": 2201341,
+          "cards": 154,
+          "candidates": 273,
+          "superPerformance": false,
+          "selection": "settled"
+        },
+        {
+          "rendered": 2081,
+          "reused": 0,
+          "calls": 75,
+          "triangles": 2201341,
+          "cards": 154,
+          "candidates": 273,
+          "superPerformance": false,
+          "selection": "settled"
+        },
+        {
+          "rendered": 2081,
+          "reused": 0,
+          "calls": 75,
+          "triangles": 2201341,
+          "cards": 154,
+          "candidates": 273,
+          "superPerformance": false,
+          "selection": "settled"
+        },
+        {
+          "rendered": 2081,
+          "reused": 0,
+          "calls": 75,
+          "triangles": 2201341,
+          "cards": 154,
+          "candidates": 273,
+          "superPerformance": false,
+          "selection": "settled"
+        },
+        {
+          "rendered": 2081,
+          "reused": 0,
+          "calls": 75,
+          "triangles": 2201341,
+          "cards": 154,
+          "candidates": 273,
+          "superPerformance": false,
+          "selection": "settled"
+        }
+      ],
+      "longTasks": [],
+      "gpu": "ANGLE (NVIDIA, NVIDIA GeForce RTX 5070 Ti Laptop GPU (0x00002F18) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+      "canvases": [
+        {
+          "width": 1920,
+          "height": 1080
+        },
+        {
+          "width": 1920,
+          "height": 1080
+        }
+      ],
+      "domNodes": 883,
+      "metrics": {
+        "TaskDuration": 3.129055000000001,
+        "ScriptDuration": 1.9799229999999994,
+        "LayoutDuration": 0.12093699999999985,
+        "RecalcStyleDuration": 0.17439799999999983,
+        "LayoutCount": 1314,
+        "RecalcStyleCount": 1605
+      },
+      "heapMiB": 25.117900848388672,
+      "resourceCount": 40,
+      "resourceMiB": 10.320924758911133,
+      "largest": [
+        {
+          "name": "assets/archive-cassette.dda42b9b3b471d11.glb",
+          "bytes": 3565116,
+          "transfer": 3565416,
+          "duration": 98.70000000018626
+        },
+        {
+          "name": "assets/archive-assembly.d411170676f55a32.glb",
+          "bytes": 3343744,
+          "transfer": 3344044,
+          "duration": 165.90000000037253
+        },
+        {
+          "name": "assets/index-BZKjcaU2.js",
+          "bytes": 1028976,
+          "transfer": 312429,
+          "duration": 270.5
+        },
+        {
+          "name": "audio/motif.ogg",
+          "bytes": 674580,
+          "transfer": 674880,
+          "duration": 48
+        },
+        {
+          "name": "assets/index-CVN8YLwU.css",
+          "bytes": 666746,
+          "transfer": 206096,
+          "duration": 76.89999999990687
+        },
+        {
+          "name": "audio/atmosphere.ogg",
+          "bytes": 537407,
+          "transfer": 537707,
+          "duration": 43
+        },
+        {
+          "name": "audio/pulse.ogg",
+          "bytes": 371667,
+          "transfer": 371967,
+          "duration": 40.799999999813735
+        }
+      ]
+    },
+    {
+      "name": "production-super-idle",
+      "elapsed": 6009.899999999907,
+      "frames": 610,
+      "frameP50": 10,
+      "frameP95": 13.400000000008731,
+      "over33": 0,
+      "initial": {
+        "rendered": 2451,
+        "reused": 0,
+        "calls": 43,
+        "triangles": 1458978,
+        "cards": 316,
+        "candidates": 458,
+        "superPerformance": true,
+        "selection": "settled"
+      },
+      "final": {
+        "rendered": 3061,
+        "reused": 0,
+        "calls": 43,
+        "triangles": 1458978,
+        "cards": 316,
+        "candidates": 458,
+        "superPerformance": true,
+        "selection": "settled"
+      },
+      "renders": [
+        {
+          "rendered": 2500,
+          "reused": 0,
+          "calls": 43,
+          "triangles": 1463106,
+          "cards": 317,
+          "candidates": 458,
+          "superPerformance": true,
+          "selection": "settled"
+        },
+        {
+          "rendered": 2544,
+          "reused": 0,
+          "calls": 43,
+          "triangles": 1463106,
+          "cards": 317,
+          "candidates": 458,
+          "superPerformance": true,
+          "selection": "settled"
+        },
+        {
+          "rendered": 2592,
+          "reused": 0,
+          "calls": 43,
+          "triangles": 1463106,
+          "cards": 317,
+          "candidates": 458,
+          "superPerformance": true,
+          "selection": "settled"
+        },
+        {
+          "rendered": 2644,
+          "reused": 0,
+          "calls": 43,
+          "triangles": 1458978,
+          "cards": 316,
+          "candidates": 458,
+          "superPerformance": true,
+          "selection": "settled"
+        },
+        {
+          "rendered": 2698,
+          "reused": 0,
+          "calls": 43,
+          "triangles": 1450722,
+          "cards": 314,
+          "candidates": 458,
+          "superPerformance": true,
+          "selection": "settled"
+        },
+        {
+          "rendered": 2753,
+          "reused": 0,
+          "calls": 43,
+          "triangles": 1454850,
+          "cards": 315,
+          "candidates": 458,
+          "superPerformance": true,
+          "selection": "settled"
+        },
+        {
+          "rendered": 2803,
+          "reused": 0,
+          "calls": 43,
+          "triangles": 1450722,
+          "cards": 314,
+          "candidates": 458,
+          "superPerformance": true,
+          "selection": "settled"
+        },
+        {
+          "rendered": 2849,
+          "reused": 0,
+          "calls": 43,
+          "triangles": 1454850,
+          "cards": 315,
+          "candidates": 458,
+          "superPerformance": true,
+          "selection": "settled"
+        },
+        {
+          "rendered": 2895,
+          "reused": 0,
+          "calls": 43,
+          "triangles": 1458978,
+          "cards": 316,
+          "candidates": 458,
+          "superPerformance": true,
+          "selection": "settled"
+        },
+        {
+          "rendered": 2941,
+          "reused": 0,
+          "calls": 43,
+          "triangles": 1458978,
+          "cards": 316,
+          "candidates": 458,
+          "superPerformance": true,
+          "selection": "settled"
+        },
+        {
+          "rendered": 2978,
+          "reused": 0,
+          "calls": 43,
+          "triangles": 1458978,
+          "cards": 316,
+          "candidates": 458,
+          "superPerformance": true,
+          "selection": "settled"
+        },
+        {
+          "rendered": 3017,
+          "reused": 0,
+          "calls": 43,
+          "triangles": 1458978,
+          "cards": 316,
+          "candidates": 458,
+          "superPerformance": true,
+          "selection": "settled"
+        },
+        {
+          "rendered": 3057,
+          "reused": 0,
+          "calls": 43,
+          "triangles": 1458978,
+          "cards": 316,
+          "candidates": 458,
+          "superPerformance": true,
+          "selection": "settled"
+        }
+      ],
+      "longTasks": [],
+      "gpu": "ANGLE (NVIDIA, NVIDIA GeForce RTX 5070 Ti Laptop GPU (0x00002F18) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+      "canvases": [
+        {
+          "width": 1152,
+          "height": 648
+        },
+        {
+          "width": 1920,
+          "height": 1080
+        }
+      ],
+      "domNodes": 983,
+      "metrics": {
+        "TaskDuration": 4.0694230000000005,
+        "ScriptDuration": 2.933211,
+        "LayoutDuration": 0.07119600000000004,
+        "RecalcStyleDuration": 0.11099000000000014,
+        "LayoutCount": 1240,
+        "RecalcStyleCount": 1513
+      },
+      "heapMiB": 23.11410140991211,
+      "resourceCount": 46,
+      "resourceMiB": 10.530328750610352,
+      "largest": [
+        {
+          "name": "assets/archive-cassette.dda42b9b3b471d11.glb",
+          "bytes": 3565116,
+          "transfer": 3565416,
+          "duration": 98.70000000018626
+        },
+        {
+          "name": "assets/archive-assembly.d411170676f55a32.glb",
+          "bytes": 3343744,
+          "transfer": 3344044,
+          "duration": 165.90000000037253
+        },
+        {
+          "name": "assets/index-BZKjcaU2.js",
+          "bytes": 1028976,
+          "transfer": 312429,
+          "duration": 270.5
+        },
+        {
+          "name": "audio/motif.ogg",
+          "bytes": 674580,
+          "transfer": 674880,
+          "duration": 48
+        },
+        {
+          "name": "assets/index-CVN8YLwU.css",
+          "bytes": 666746,
+          "transfer": 206096,
+          "duration": 76.89999999990687
+        },
+        {
+          "name": "audio/atmosphere.ogg",
+          "bytes": 537407,
+          "transfer": 537707,
+          "duration": 43
+        },
+        {
+          "name": "audio/pulse.ogg",
+          "bytes": 371667,
+          "transfer": 371967,
+          "duration": 40.799999999813735
+        }
+      ]
+    },
+    {
+      "name": "production-super-navigation",
+      "elapsed": 6031.299999999814,
+      "frames": 212,
+      "frameP50": 20,
+      "frameP95": 56.59999999999127,
+      "over33": 21,
+      "initial": {
+        "rendered": 3063,
+        "reused": 0,
+        "calls": 43,
+        "triangles": 1458978,
+        "cards": 316,
+        "candidates": 458,
+        "superPerformance": true,
+        "selection": "settled"
+      },
+      "final": {
+        "rendered": 3275,
+        "reused": 0,
+        "calls": 241,
+        "triangles": 2369622,
+        "cards": 312,
+        "candidates": 457,
+        "superPerformance": true,
+        "selection": "wave"
+      },
+      "renders": [
+        {
+          "rendered": 3099,
+          "reused": 0,
+          "calls": 43,
+          "triangles": 1463106,
+          "cards": 317,
+          "candidates": 458,
+          "superPerformance": true,
+          "selection": "settled"
+        },
+        {
+          "rendered": 3101,
+          "reused": 0,
+          "calls": 76,
+          "triangles": 1617632,
+          "cards": 317,
+          "candidates": 458,
+          "superPerformance": true,
+          "selection": "wave"
+        },
+        {
+          "rendered": 3127,
+          "reused": 0,
+          "calls": 109,
+          "triangles": 1763902,
+          "cards": 315,
+          "candidates": 456,
+          "superPerformance": true,
+          "selection": "wave"
+        },
+        {
+          "rendered": 3152,
+          "reused": 0,
+          "calls": 142,
+          "triangles": 1906044,
+          "cards": 312,
+          "candidates": 455,
+          "superPerformance": true,
+          "selection": "wave"
+        },
+        {
+          "rendered": 3171,
+          "reused": 0,
+          "calls": 208,
+          "triangles": 2223352,
+          "cards": 314,
+          "candidates": 458,
+          "superPerformance": true,
+          "selection": "wave"
+        },
+        {
+          "rendered": 3188,
+          "reused": 0,
+          "calls": 241,
+          "triangles": 2365494,
+          "cards": 311,
+          "candidates": 458,
+          "superPerformance": true,
+          "selection": "wave"
+        },
+        {
+          "rendered": 3203,
+          "reused": 0,
+          "calls": 237,
+          "triangles": 2359854,
+          "cards": 310,
+          "candidates": 458,
+          "superPerformance": true,
+          "selection": "wave"
+        },
+        {
+          "rendered": 3223,
+          "reused": 0,
+          "calls": 241,
+          "triangles": 2361366,
+          "cards": 310,
+          "candidates": 458,
+          "superPerformance": true,
+          "selection": "wave"
+        },
+        {
+          "rendered": 3240,
+          "reused": 0,
+          "calls": 241,
+          "triangles": 2357238,
+          "cards": 309,
+          "candidates": 459,
+          "superPerformance": true,
+          "selection": "wave"
+        },
+        {
+          "rendered": 3258,
+          "reused": 0,
+          "calls": 241,
+          "triangles": 2357238,
+          "cards": 309,
+          "candidates": 456,
+          "superPerformance": true,
+          "selection": "wave"
+        },
+        {
+          "rendered": 3274,
+          "reused": 0,
+          "calls": 241,
+          "triangles": 2361366,
+          "cards": 310,
+          "candidates": 456,
+          "superPerformance": true,
+          "selection": "wave"
+        }
+      ],
+      "longTasks": [
+        {
+          "start": 74969.5,
+          "duration": 1301
+        }
+      ],
+      "gpu": "ANGLE (NVIDIA, NVIDIA GeForce RTX 5070 Ti Laptop GPU (0x00002F18) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+      "canvases": [
+        {
+          "width": 1152,
+          "height": 648
+        },
+        {
+          "width": 1920,
+          "height": 1080
+        }
+      ],
+      "domNodes": 1033,
+      "metrics": {
+        "TaskDuration": 4.394436000000006,
+        "ScriptDuration": 3.3959430000000026,
+        "LayoutDuration": 0.08299499999999993,
+        "RecalcStyleDuration": 0.12882300000000013,
+        "LayoutCount": 635,
+        "RecalcStyleCount": 641
+      },
+      "heapMiB": 19.76375961303711,
+      "resourceCount": 46,
+      "resourceMiB": 10.530328750610352,
+      "largest": [
+        {
+          "name": "assets/archive-cassette.dda42b9b3b471d11.glb",
+          "bytes": 3565116,
+          "transfer": 3565416,
+          "duration": 98.70000000018626
+        },
+        {
+          "name": "assets/archive-assembly.d411170676f55a32.glb",
+          "bytes": 3343744,
+          "transfer": 3344044,
+          "duration": 165.90000000037253
+        },
+        {
+          "name": "assets/index-BZKjcaU2.js",
+          "bytes": 1028976,
+          "transfer": 312429,
+          "duration": 270.5
+        },
+        {
+          "name": "audio/motif.ogg",
+          "bytes": 674580,
+          "transfer": 674880,
+          "duration": 48
+        },
+        {
+          "name": "assets/index-CVN8YLwU.css",
+          "bytes": 666746,
+          "transfer": 206096,
+          "duration": 76.89999999990687
+        },
+        {
+          "name": "audio/atmosphere.ogg",
+          "bytes": 537407,
+          "transfer": 537707,
+          "duration": 43
+        },
+        {
+          "name": "audio/pulse.ogg",
+          "bytes": 371667,
+          "transfer": 371967,
+          "duration": 40.799999999813735
+        }
+      ]
+    },
+    {
+      "name": "development-archive-idle",
+      "elapsed": 6025.5,
+      "frames": 309,
+      "frameP50": 19.899999999999636,
+      "frameP95": 26.299999999999272,
+      "over33": 0,
+      "initial": {
+        "rendered": 365,
+        "reused": 0,
+        "calls": 75,
+        "triangles": 4272997,
+        "cards": 316,
+        "candidates": 458,
+        "superPerformance": false,
+        "selection": "settled"
+      },
+      "final": {
+        "rendered": 674,
+        "reused": 0,
+        "calls": 75,
+        "triangles": 4272997,
+        "cards": 316,
+        "candidates": 458,
+        "superPerformance": false,
+        "selection": "settled"
+      },
+      "renders": [
+        {
+          "rendered": 391,
+          "reused": 0,
+          "calls": 75,
+          "triangles": 4285785,
+          "cards": 317,
+          "candidates": 458,
+          "superPerformance": false,
+          "selection": "settled"
+        },
+        {
+          "rendered": 411,
+          "reused": 0,
+          "calls": 75,
+          "triangles": 4285785,
+          "cards": 317,
+          "candidates": 458,
+          "superPerformance": false,
+          "selection": "settled"
+        },
+        {
+          "rendered": 432,
+          "reused": 0,
+          "calls": 75,
+          "triangles": 4272997,
+          "cards": 316,
+          "candidates": 458,
+          "superPerformance": false,
+          "selection": "settled"
+        },
+        {
+          "rendered": 454,
+          "reused": 0,
+          "calls": 75,
+          "triangles": 4272997,
+          "cards": 316,
+          "candidates": 458,
+          "superPerformance": false,
+          "selection": "settled"
+        },
+        {
+          "rendered": 477,
+          "reused": 0,
+          "calls": 75,
+          "triangles": 4285785,
+          "cards": 317,
+          "candidates": 458,
+          "superPerformance": false,
+          "selection": "settled"
+        },
+        {
+          "rendered": 499,
+          "reused": 0,
+          "calls": 75,
+          "triangles": 4285785,
+          "cards": 317,
+          "candidates": 458,
+          "superPerformance": false,
+          "selection": "settled"
+        },
+        {
+          "rendered": 522,
+          "reused": 0,
+          "calls": 75,
+          "triangles": 4285785,
+          "cards": 317,
+          "candidates": 458,
+          "superPerformance": false,
+          "selection": "settled"
+        },
+        {
+          "rendered": 549,
+          "reused": 0,
+          "calls": 75,
+          "triangles": 4285785,
+          "cards": 317,
+          "candidates": 458,
+          "superPerformance": false,
+          "selection": "settled"
+        },
+        {
+          "rendered": 574,
+          "reused": 0,
+          "calls": 75,
+          "triangles": 4247421,
+          "cards": 314,
+          "candidates": 458,
+          "superPerformance": false,
+          "selection": "settled"
+        },
+        {
+          "rendered": 599,
+          "reused": 0,
+          "calls": 75,
+          "triangles": 4247421,
+          "cards": 314,
+          "candidates": 458,
+          "superPerformance": false,
+          "selection": "settled"
+        },
+        {
+          "rendered": 626,
+          "reused": 0,
+          "calls": 75,
+          "triangles": 4260209,
+          "cards": 315,
+          "candidates": 458,
+          "superPerformance": false,
+          "selection": "settled"
+        },
+        {
+          "rendered": 652,
+          "reused": 0,
+          "calls": 75,
+          "triangles": 4272997,
+          "cards": 316,
+          "candidates": 458,
+          "superPerformance": false,
+          "selection": "settled"
+        }
+      ],
+      "longTasks": [],
+      "gpu": "ANGLE (NVIDIA, NVIDIA GeForce RTX 5070 Ti Laptop GPU (0x00002F18) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+      "canvases": [
+        {
+          "width": 1920,
+          "height": 1080
+        }
+      ],
+      "domNodes": 853,
+      "metrics": {
+        "TaskDuration": 4.450637999999998,
+        "ScriptDuration": 3.261891999999996,
+        "LayoutDuration": 0.08049499999999998,
+        "RecalcStyleDuration": 0.11047399999999996,
+        "LayoutCount": 643,
+        "RecalcStyleCount": 779
+      },
+      "heapMiB": 40.730403900146484,
+      "resourceCount": 114,
+      "resourceMiB": 7.804272651672363,
+      "largest": [
+        {
+          "name": "assets/archive-cassette.glb",
+          "bytes": 3565116,
+          "transfer": 3565416,
+          "duration": 93.5
+        },
+        {
+          "name": "deps/chunk-ITCRF2YK.js?v=9c94926c",
+          "bytes": 1655900,
+          "transfer": 1656200,
+          "duration": 1596.8999999999069
+        },
+        {
+          "name": "src/style.css",
+          "bytes": 641058,
+          "transfer": 641358,
+          "duration": 503.29999999981374
+        },
+        {
+          "name": "src/scene.ts",
+          "bytes": 243163,
+          "transfer": 243463,
+          "duration": 507.3000000002794
+        },
+        {
+          "name": "src/main.ts",
+          "bytes": 191793,
+          "transfer": 192093,
+          "duration": 27
+        },
+        {
+          "name": "@vite/client",
+          "bytes": 179008,
+          "transfer": 300,
+          "duration": 19.700000000186265
+        },
+        {
+          "name": "deps/three_addons_loaders_GLTFLoader__js.js?v=9c94926c",
+          "bytes": 100827,
+          "transfer": 101127,
+          "duration": 275.5
+        }
+      ]
+    }
+  ]
+}

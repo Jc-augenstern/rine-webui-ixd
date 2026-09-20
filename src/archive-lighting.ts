@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
+import { scenePalette } from "./palette";
 
 export type LightingLook = "baseline" | "refined";
 
@@ -20,13 +21,13 @@ export function createArchiveLighting(
   scene.environmentIntensity = refined ? 0.52 : 0.48;
   scene.add(
     new THREE.HemisphereLight(
-      "#fffaf5",
-      refined ? "#b49b80" : "#b4a18c",
+      scenePalette.sky,
+      scenePalette.groundLight,
       refined ? 0.5 : 0.65,
     ),
   );
   const key = new THREE.DirectionalLight(
-    refined ? "#fff4e5" : "#fff7ed",
+    scenePalette.keyLight,
     refined ? 1.7 : 1.4,
   );
   key.position.set(

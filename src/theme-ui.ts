@@ -1,9 +1,5 @@
 import "./theme.css";
-const palette = {
-  ink: ["#080a08", "#e0e3dc"], muted: ["#77756d", "#a6b0b1"], line: ["#aaa59a", "#536166"],
-  paper: ["#eae5e1", "#11181b"], panel: ["#edebe4", "#202a2f"], field: ["#e7e3d9", "#2a363b"],
-  accent: ["#9b7247", "#c5a16b"],
-} as const;
+import { palette } from "./palette";
 let previous = -1;
 export let themeAmount = 0;
 function rgb(hex: string) { return [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16)); }
@@ -17,6 +13,7 @@ export function paintTheme(amount: number) {
     const value = from.map((v, i) => Math.round(v + (to[i] - v) * amount)).join(", ");
     root.style.setProperty(`--theme-${name}`, `rgb(${value})`);
     root.style.setProperty(`--theme-${name}-rgb`, value);
+    if (name === 'paper') document.querySelector('meta[name="theme-color"]')?.setAttribute('content', `rgb(${value})`);
   }
 }
 export function themeSettingsMarkup(dark: boolean) {
