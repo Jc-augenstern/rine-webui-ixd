@@ -3,7 +3,7 @@
 .sm-node-visual { position: absolute; inset: 0; color: inherit; pointer-events: none; }
 .sm-node-visual .gg-vector { overflow: visible; fill: none; }
 .gg-vector :is(path, circle, ellipse, line, polygon) { vector-effect: non-scaling-stroke; }
-.gg-line { fill: none; stroke: currentColor; stroke-width: .75; stroke-linecap: round; stroke-linejoin: round; opacity: .66; }
+.gg-line { fill: none; stroke: currentColor; stroke-width: .75; stroke-linecap: round; stroke-linejoin: round; opacity: .66; transition: stroke-width .6s; }
 .gg-line.gg-faint { opacity: .28; stroke-width: .6; }
 .gg-line.gg-strong { opacity: .85; stroke-width: 1.05; }
 .gg-line.gg-tick { opacity: .75; stroke-width: .9; }
@@ -25,7 +25,7 @@
 .gg-line.gg-ring-segment { opacity: .78; stroke-width: 1.35; }
 .gg-line.gg-comet-stream { opacity: .52; }
 .gg-line.gg-guide { stroke-dasharray: 50; stroke-dashoffset: 44; opacity: 0; transition: stroke-dashoffset .7s, opacity .45s; }
-.gg-signal { fill: none; stroke: #e3edff; stroke-width: 1.25; stroke-linecap: round; stroke-dasharray: 4 96; stroke-dashoffset: 102; opacity: 0; }
+.gg-signal { fill: none; stroke: #e3edff; stroke-width: 1.25; stroke-linecap: round; stroke-dasharray: 4 96; stroke-dashoffset: 102; opacity: 0; transition: opacity .18s; animation: gg-signal-travel 1.8s linear infinite paused; animation-delay: var(--gg-pulse-delay, 0s); }
 .gg-part { transform-box: view-box; transform-origin: 0 0; transform: none; transition: transform .68s cubic-bezier(.2,.75,.25,1), opacity .35s; transition-delay: var(--gg-delay, 0ms); }
 .gg-hover-survey { opacity: 0; transition: opacity .3s; }
 .sm-node-visual .gg-haze { opacity: .55; transform: none; background: radial-gradient(ellipse 28% 28% at 50% 50%, color-mix(in srgb, var(--star-color) 26%, transparent), transparent 92%); }
@@ -39,35 +39,36 @@
 /* Hover affects only artwork. The 44px navigation hitbox stays stationary. */
 .sm-star:is(:hover, :focus-visible) .gg-part { transform: var(--gg-hover, none); }
 .sm-star:is(:hover, :focus-visible) .gg-signal,
-.sm-modal:is([data-journey="entering"], [data-journey="detail"]) .gg-signal { opacity: .94; animation: gg-signal-travel 1.8s linear infinite; animation-delay: var(--gg-pulse-delay, 0s); }
-.sm-star:is(:hover, :focus-visible) .gg-signal-return,
-.sm-modal:is([data-journey="entering"], [data-journey="detail"]) .gg-signal-return { animation-direction: alternate; }
+.sm-modal:is([data-journey="entering"], [data-journey="detail"]) .gg-signal { opacity: .94; animation-play-state: running; }
+.gg-signal-return { animation-direction: alternate; }
 @keyframes gg-signal-travel { from { stroke-dashoffset: 100; } to { stroke-dashoffset: 0; } }
-.sm-star:is(:hover, :focus-visible) [data-motion-preset="echo-expand"] .gg-wave { animation: gg-echo-answer 1.5s ease-out infinite; }
-.sm-star:is(:hover, :focus-visible) .gg-echo-1 .gg-wave { animation-delay: .16s; }
-.sm-star:is(:hover, :focus-visible) .gg-echo-2 .gg-wave { animation-delay: .32s; }
+[data-motion-preset="echo-expand"] .gg-wave { animation: gg-echo-answer 1.5s ease-out infinite paused; }
+.sm-star:is(:hover, :focus-visible) .gg-wave, .sm-modal .gg-wave { animation-play-state: running; }
+.gg-echo-1 .gg-wave { animation-delay: .16s; }
+.gg-echo-2 .gg-wave { animation-delay: .32s; }
 @keyframes gg-echo-answer { 0%, 100% { stroke-opacity: .5; } 28% { stroke-opacity: 1; } }
-.sm-star:is(:hover, :focus-visible) [data-motion-preset="shell-open"] .gg-core-group { animation: gg-protostar-breathe 1.9s ease-in-out infinite alternate; transform-box: view-box; transform-origin: 0 0; }
+[data-motion-preset="shell-open"] .gg-core-group { animation: gg-protostar-breathe 1.9s ease-in-out infinite alternate paused; transform-box: view-box; transform-origin: 0 0; }
+.sm-star:is(:hover, :focus-visible) .gg-core-group, .sm-modal .gg-core-group { animation-play-state: running; }
 @keyframes gg-protostar-breathe { from { transform: scale(1); } to { transform: scale(1.13); } }
 
-/* The flyout clones the exact SVG. Entry and exit use reversible transitions
+/* The flyout moves the same SVG instance. Entry and exit use reversible transitions
    for each authored layer, so Esc halfway through can retarget current poses. */
 .sm-modal:is([data-journey="entering"], [data-journey="detail"]) .gg-part { transform: var(--gg-open, none); }
 .sm-modal[data-journey="entering"] .gg-part { transition-duration: 1.03s; }
-@starting-style {
-  .sm-modal[data-journey="entering"] .gg-part { transform: var(--gg-hover, none); }
-}
 .sm-modal[data-journey="leaving"] .gg-part { transform: none; transition-duration: .6s; transition-delay: 0ms; }
 .sm-modal:is([data-journey="entering"], [data-journey="detail"]) .gg-guide { stroke-dashoffset: 0; opacity: .7; }
 .sm-modal[data-journey="leaving"] .gg-guide { stroke-dashoffset: 44; opacity: 0; transition-duration: .25s; }
-.sm-modal[data-journey="leaving"] .gg-signal { opacity: 0; animation: none; transition: opacity .18s; }
-.sm-modal .gg-line { stroke-width: .88; }
-.sm-modal .gg-line.gg-faint { stroke-width: .65; }
-.sm-modal .gg-line.gg-strong { stroke-width: 1.15; }
-.sm-modal .gg-line.gg-logo-frame { stroke-width: 1.6; }
-.sm-modal .gg-line.gg-logo-strokes { stroke-width: 1.15; }
-.sm-modal .gg-ribbon, .sm-modal .gg-shell-haze { stroke-width: 10; opacity: .065; }
-.sm-modal .gg-prism-fill { fill-opacity: .045; }
+.sm-modal[data-journey="leaving"] .gg-signal { opacity: 0; animation-play-state: paused; transition: opacity .18s; }
+.sm-modal:is([data-journey="entering"], [data-journey="detail"]) .gg-line { stroke-width: .88; }
+.sm-modal:is([data-journey="entering"], [data-journey="detail"]) .gg-line.gg-faint { stroke-width: .65; }
+.sm-modal:is([data-journey="entering"], [data-journey="detail"]) .gg-line.gg-strong { stroke-width: 1.15; }
+.sm-modal:is([data-journey="entering"], [data-journey="detail"]) .gg-line.gg-logo-frame { stroke-width: 1.6; }
+.sm-modal:is([data-journey="entering"], [data-journey="detail"]) .gg-line.gg-logo-strokes { stroke-width: 1.15; }
+.sm-modal:is([data-journey="entering"], [data-journey="detail"]) :is(.gg-ribbon, .gg-shell-haze) { stroke-width: 10; opacity: .065; }
+.sm-modal:is([data-journey="entering"], [data-journey="detail"]) .gg-prism-fill { fill-opacity: .045; }
+
+.gg-ribbon, .gg-shell-haze { transition: stroke-width .6s, opacity .6s; }
+.gg-prism-fill { transition: fill-opacity .6s; }
 
 /* Dormant shapes are a quiet arc, binary remnant or crystal, never controls. */
 .sm-empty > i.sm-empty-glyph { position: absolute; width: 38px; height: 38px; background: none; border-radius: 0; opacity: .48; color: #7589a7; }

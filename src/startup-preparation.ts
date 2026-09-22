@@ -3,9 +3,8 @@ import { BootLettering } from "./boot-lettering";
 // Initial HTML/CSS and the application read this one authored duration.
 const preparationStyle = getComputedStyle(document.documentElement);
 export const PREPARATION_DURATION = parseFloat(preparationStyle.getPropertyValue("--ixd-preparation-duration")) / 1000;
-const revealPortion = parseFloat(preparationStyle.getPropertyValue("--ixd-preparation-reveal"));
+export const PREPARATION_FADE_DURATION = parseFloat(preparationStyle.getPropertyValue("--ixd-preparation-fade")) / 1000;
 const phrase = "ACCESS PERMISSION REQUIRED";
-const reveal = [1, 1, 3, 4, 5, 6, 9, 11, 12, 14, 17, 18, 19, 20, 22, 23, 25, 26];
 
 /** Uses the application's clock; the progress is a visual sequence, not network telemetry. */
 export class StartupPreparation {
@@ -14,6 +13,7 @@ export class StartupPreparation {
   private lastUpdateAt = performance.now();
   elapsed = 0;
   completedDuration = 0;
+  filledAt = 0;
   constructor(private element: HTMLElement) {
     this.elapsed = Math.max(0, Math.min(PREPARATION_DURATION, (performance.now() - Number(element.dataset.startedAt || performance.now())) / 1000));
     element.dataset.bound = "true";
@@ -31,9 +31,12 @@ export class StartupPreparation {
     if (dt > 0) this.elapsed += Math.min(.1, Math.max(0, (now - this.lastUpdateAt) / 1000));
     this.lastUpdateAt = now;
     const progress = Math.min(1, this.elapsed / PREPARATION_DURATION);
-    this.lettering.setText(phrase.slice(0, reveal[Math.min(reveal.length - 1, Math.floor(progress / revealPortion * reveal.length))]));
+    this.lettering.setText(phrase.slice(0, Math.floor(progress * phrase.length)));
     this.bar.style.transform = `scaleX(${progress})`;
-    if (this.elapsed >= PREPARATION_DURATION) {
+    if (progress === 1 && !this.filledAt) this.filledAt = this.elapsed;
+    const fade = Math.max(0, Math.min(1, (this.elapsed - PREPARATION_DURATION) / PREPARATION_FADE_DURATION));
+    this.element.style.opacity = String(1 - fade * fade * (3 - 2 * fade));
+    if (this.elapsed >= PREPARATION_DURATION + PREPARATION_FADE_DURATION) {
       this.completedDuration = this.elapsed;
       this.element.hidden = true;
       return true;
@@ -43,6 +46,7 @@ export class StartupPreparation {
   restart() {
     this.elapsed = 0;
     this.completedDuration = 0;
+    this.filledAt = 0;
     this.clearRecovery();
     this.element.hidden = false;
     this.update(0);

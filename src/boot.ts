@@ -2,7 +2,7 @@ import { bootMotion } from "./boot-motion";
 import { IxdMotion } from "./ixd-mark";
 import { themeAmount } from "./theme-ui";
 import { BootLettering } from "./boot-lettering";
-import { welcomeFlashState } from "./welcome-transition";
+import { welcomeFlashState, welcomeTextState } from "./welcome-transition";
 
 const ns = "http://www.w3.org/2000/svg";
 const arc = (r: number, start: number, sweep: number, x = 960, y = 540) => {
@@ -245,7 +245,10 @@ export class BootSequence {
   }
   /** One local, discrete 300 ms cut; ring geometry is never dismantled. */
   renderWelcomeFlash(elapsedMs: number) {
-    this.renderWelcome(19.2, 0);
+    this.renderWelcome(18.5);
+    this.opacity(".welcome-company", 0);
+    this.opacity(".welcome-database", 0);
+    if (!this.el(".welcome-logo").dataset.shared) this.opacity(".welcome-logo", 0);
     const flash = welcomeFlashState(elapsedMs);
     this.stage.dataset.welcomeFlashMs = elapsedMs.toFixed(3);
     this.stage.dataset.welcomeFlashFrame = String(flash.sourceFrame);
@@ -254,7 +257,7 @@ export class BootSequence {
     this.el(".welcome-heading").style.color =
       `color-mix(in srgb, var(--theme-ink) ${flash.ink * 100}%, var(--theme-panel))`;
   }
-  renderWelcome(time: number, revealAge = Infinity) {
+  renderWelcome(time: number) {
     const state = this.update(time);
     this.opacity(".scan", 0);
     this.opacity(".welcome", 1);
@@ -264,17 +267,12 @@ export class BootSequence {
     this.el(".welcome-panel").style.removeProperty("background-color");
     this.el(".welcome-heading").style.color = "var(--theme-ink)";
     this.opacity(".boot-white", 0);
-    const reveal = (start: number, length: number) => {
-      const p = Math.max(0, Math.min(1, (revealAge - start) / length));
-      return p * p * (3 - 2 * p);
-    };
-    // Preserve the Welcome layout and shared Logo while avoiding additional
-    // text flashes after the measured three local rectangle pulses.
-    this.opacity(".welcome-company", reveal(.16, .12));
-    if (!this.el(".welcome-logo").dataset.shared) this.opacity(".welcome-logo", reveal(.16, .12));
-    this.opacity(".welcome-database", reveal(.42, .12));
-    this.companyInk[1].querySelector("span")!.style.opacity = "1";
-    this.el(".welcome-highlight").style.clipPath = "none";
+    // Keep the original expanding strip, calibrated to B's measured 60fps
+    // cuts. The older archive has an extra database pulse absent in TARGET.
+    const text = welcomeTextState((time - 18.52) / 2);
+    this.opacity(".welcome-company", text.companyVisible ? (text.companyMask ? .65 : 1) : 0);
+    this.companyInk[1].querySelector("span")!.style.opacity = text.companyMask ? ".06" : "1";
+    this.opacity(".welcome-database", text.databaseVisible);
     delete this.stage.dataset.welcomeFlashMs;
     delete this.stage.dataset.welcomeFlashFrame;
     return state;

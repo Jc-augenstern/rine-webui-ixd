@@ -6,7 +6,7 @@ import { resolve } from 'node:path';
 // This checker observes natural product time. It does not seek the startup,
 // authorization, Welcome or portal timelines while asserting continuity.
 const plan = {
-  startup: ['cold preparation approximately 1.5 seconds', 'permission/connection/progress together', 'no small loading logo flash', 'no prelogin ID CONFIRMED', 'overlapping logo travel and form appearance'],
+  startup: ['cold preparation 1.5 seconds plus 0.5 second fade', 'permission/connection/progress together', 'no small loading logo flash', 'no prelogin ID CONFIRMED', 'overlapping logo travel and form appearance'],
   password: ['pointer and keyboard reveal/hide', 'value and edit continuity', 'eye does not submit', 'wrong and correct credentials'],
   continuity: ['300 ms local reference flicker with no remaining ring', 'one persistent terminal background from initial HTML through login and replay', 'one persistent visible Logo across Welcome and bridge', 'same live galaxy canvas'],
   regression: ['12 stable distinct presets', 'five flight/detail/return journeys', 'dormant stars', 'early Escape', 'replay', 'skip', 'resize', 'narrow viewport', 'reduced motion', 'no WebGL'],
@@ -150,7 +150,7 @@ async function startupAndPassword(page) {
   check('Cold startup presents a measurable preparation screen', preparation.length >= 10);
   const duration = preparation.at(-1).time - preparation[0].time;
   report.measurements.preparationVisibleMs = duration;
-  check('Normal foreground preparation lasts approximately 1.5 seconds', duration >= 1420 && duration <= 1700);
+  check('Normal foreground preparation includes the added 0.5-second fade', duration >= 1850 && duration <= 2170);
   checkTerminalBackground(frames, 'Cold startup');
   const configuration = await state(page);
   check('Preparation has the authored 1.5-second duration', configuration.preparationDuration === 1.5);
@@ -161,7 +161,7 @@ async function startupAndPassword(page) {
   check('Dynamic Logo retains its original approximately 2.84-second drawing', report.measurements.introVisibleMs >= 2660 && report.measurements.introVisibleMs <= 3100);
   report.measurements.loginEntranceMs = loginEntrance.at(-1).time - loginEntrance[0].time;
   check('Logo and login entrance retain their original approximately 0.72-second motion', report.measurements.loginEntranceMs >= 600 && report.measurements.loginEntranceMs <= 950);
-  const completeText = preparation.filter(f => f.time >= preparation[0].time + 900);
+  const completeText = preparation.filter(f => f.time >= preparation[0].time + 1530);
   check('Preparation finishes the preserved letter reveal with ACCESS PERMISSION REQUIRED', completeText.length > 5 && completeText.every(f => /ACCESS\s+PERMISSION\s+REQUIRED/.test(f.preparationText)));
   check('Letter reveal keeps its container horizontally centered', preparation.filter(f => f.preparationTitle?.visible).every(f => Math.abs(f.preparationTitle.x + f.preparationTitle.width / 2 - page.viewportSize().width / 2) < 3));
   check('Preparation keeps connection copy visible', preparation.filter(f => /CONNECTING\s+TO\s+INTERNAL\s+DATABASE/.test(f.preparationText)).length >= preparation.length * .9);
@@ -232,7 +232,11 @@ async function authorizationContinuity(page, prefix = '') {
     check(`Reference flicker state ${i+1} preserves measured panel and ink mixtures`, samples.every(f => Math.abs(f.panel.opacity-panel) < .025 && Math.abs(f.inkMix-ink) < .025));
   }
   const welcomeFrames = frames.filter(f => f.phase === 'welcome');
-  for(const name of ['company','database']) check(`${name} has one gentle reveal without repeated flashing`, welcomeFrames.every((f,i) => i === 0 || f[name].opacity + .01 >= welcomeFrames[i-1][name].opacity));
+  for(const name of ['company','database']) {
+    const states = welcomeFrames.map(f => f[name].opacity);
+    check(`${name} retains authored short on/off cuts`, states.some((v,i) => i > 0 && v === 0 && states[i-1] > .5) && states.at(-1) === 1);
+    if (name === 'database') check('Database has exactly the two off-pairs observed in beta0.2', states.filter((v,i) => i > 0 && v === 0 && states[i-1] > .5).length === 2);
+  }
   check('The shared terminal background survives authorization and flicker', new Set(frames.filter(f => ['authorized','handoff','welcome'].includes(f.phase)).map(f => f.background?.id)).size === 1);
   const transition = frames.filter(f => ['welcome', 'bridge'].includes(f.phase));
   const firstVisible = transition.findIndex(f => f.logos.some(l => l.visible));
@@ -277,7 +281,7 @@ async function nodeRegression(page) {
   const replayPreparation = replay.filter(f => f.preparation?.visible);
   const replayDuration = replayPreparation.at(-1).time - replayPreparation[0].time;
   report.measurements.replayPreparationMs = replayDuration;
-  check('Replay preserves the 1.5-second preparation', replayDuration >= 1420 && replayDuration <= 1700);
+  check('Replay preserves the 1.5-second fill plus 0.5-second fade', replayDuration >= 1850 && replayDuration <= 2170);
   checkTerminalBackground(replay, 'Replay');
   check('Replay reuses the original terminal background DOM node', await page.evaluate(() => document.querySelector('#boot-background') === window.beta04ReplayBackground));
   check('Replay resets the password and its type', await page.locator(selectors.password).inputValue() === '' && await page.locator(selectors.password).getAttribute('type') === 'password');
@@ -346,7 +350,7 @@ async function startupRecoveryChecks() {
   const preparation = warm.filter(f => f.preparation?.visible);
   const warmDuration = preparation.at(-1).time - preparation[0].time;
   report.measurements.warmPreparationVisibleMs = warmDuration;
-  check('Warm reload preserves the full 1.5-second preparation', warmDuration >= 1420 && warmDuration <= 1700);
+  check('Warm reload preserves fill plus foreground fade', warmDuration >= 1850 && warmDuration <= 2170);
   checkTerminalBackground(warm, 'Warm reload');
   check('Warm reload does not reintroduce the old small Logo', !warm.some(f => f.loadingLogo?.visible));
   await page.close();

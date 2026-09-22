@@ -49,6 +49,8 @@ export class GalaxyScene {
     ...this.interaction.uniforms,
     uTime: { value: 0 },
     uMotion: { value: 1 },
+    // Render displacement only: the solver, input footprint and decay stay intact.
+    uFlowDisplayGain: { value: 1.4 },
     uAspect: { value: 1 },
     uPixelRatio: { value: 1 },
     uPointer: { value: new THREE.Vector2() },
@@ -376,6 +378,7 @@ export class GalaxyScene {
       flow: {
         ...this.interaction.stats(), cameraFrozen: this.cameraFrozen, timeFrozen: this.timeFrozen,
         persistentParticles: true, materialState: "advected-reference-map", simulationHz: 60,
+        displayGain: this.uniforms.uFlowDisplayGain.value,
         uploadBytesPerStep: this.interaction.uniforms.uFlowState.value.image.data?.byteLength ?? 0,
       },
       depthLayers: 4,

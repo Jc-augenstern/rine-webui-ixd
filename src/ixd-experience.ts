@@ -8,7 +8,7 @@ import { GalaxyScene } from "./galaxy/galaxy-scene";
 import { StarMapUI } from "./ui/star-map-ui";
 import { IxdPortal, PORTAL_DURATION, REDUCED_PORTAL_DURATION } from "./ui/ixd-portal";
 import "./ixd-experience.css";
-import { StartupPreparation, PREPARATION_DURATION } from "./startup-preparation";
+import { StartupPreparation, PREPARATION_DURATION, PREPARATION_FADE_DURATION } from "./startup-preparation";
 import { WELCOME_FLASH_DURATION_MS } from "./welcome-transition";
 
 type Phase =
@@ -216,16 +216,18 @@ export class IxdExperience {
         if (reduced) this.options.boot.renderWelcome(20.4);
       }
     } else if (this.phase === "welcome") {
-      this.bootTime = Math.min(21.5, 19.2 + this.age * 2);
-      this.options.boot.renderWelcome(reduced ? 20.4 : this.bootTime, reduced ? Infinity : this.age);
+      // Original frame 588 starts the company strip, after the local A cut.
+      this.bootTime = Math.min(21.5, 18.52 + this.age * 2);
+      this.options.boot.renderWelcome(reduced ? 20.4 : this.bootTime);
       // Single reveal events share the visual clock without truncating the
       // ongoing Welcome chord when the archived clock skips between phases.
       this.options.audio.syncBootClock(reduced ? 20.4 : this.bootTime);
       if (!reduced) for (const cue of [.16, .42]) {
         if (this.age >= cue && this.age - dt < cue) this.options.audio.play("text-reveal");
       }
-      // Keep atlas/scene construction away from the short flicker pulses.
-      if (this.age >= .55 && this.galaxyHost.hidden) this.prepareGalaxy();
+      // Build only after the last measured database cut (age .90). The first
+      // atlas upload must not freeze the short B states on slower devices.
+      if (this.age >= 1.02 && this.galaxyHost.hidden) this.prepareGalaxy();
       this.galaxy?.update(dt, this.elapsed);
       if (this.age >= (reduced ? .5 : 1.5)) this.beginPortal();
     } else if (this.phase === "bridge") {
@@ -371,6 +373,8 @@ export class IxdExperience {
       bootTime: this.bootTime,
       phaseAge: this.age,
       preparationDuration: PREPARATION_DURATION,
+      preparationFadeDuration: PREPARATION_FADE_DURATION,
+      preparationFilledAt: this.preparation.filledAt,
       preparationElapsed: this.preparation.elapsed,
       preparationCompletedDuration: this.preparation.completedDuration,
       loginEntranceDuration: this.loginEntranceDuration,

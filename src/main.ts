@@ -161,7 +161,9 @@ const prefs = {
   superPerformance: false,
   ...storedPrefs,
   rendering: normalizeQuality(storedPrefs.rendering, storedPrefs.quality !== false),
-  colorTheme: storedPrefs.colorTheme === "dark" ? "dark" : "light",
+  // Old settings did not distinguish an auto-saved default from an explicit
+  // choice. Retain every saved light choice; only missing/invalid values default.
+  colorTheme: storedPrefs.colorTheme === "light" ? "light" : "dark",
 };
 paintTheme(prefs.colorTheme === "dark" ? 1 : 0);
 function syncTerminalBackgroundMotion() {
@@ -728,6 +730,7 @@ document.addEventListener("change", (e) => {
   }
 });
 document.addEventListener("click", (e) => {
+  if ((e.target as Element).closest('[data-action="reset-theme"]')) { prefs.colorTheme = "dark"; savePrefs(); return; }
   const themeButton = (e.target as Element).closest<HTMLElement>("[data-color-theme]");
   if (themeButton) { prefs.colorTheme = themeButton.dataset.colorTheme === "dark" ? "dark" : "light"; savePrefs(); return; }
   if (!started) return;

@@ -13,6 +13,20 @@ export interface StarMapUIOptions {
   reduced: boolean;
 }
 
+type GlyphGeometry = { x: number; y: number; size: number };
+type GlyphFlight = { from: GlyphGeometry; elapsed: number; duration: number; leaving: boolean; hold: boolean };
+
+/** Same authored cubic timing, evaluated on the shared frame clock. */
+function flightEase(x: number, x1: number, x2: number) {
+  let lo = 0, hi = 1;
+  for (let i = 0; i < 16; i++) {
+    const t = (lo + hi) / 2, v = 3 * (1 - t) ** 2 * t * x1 + 3 * (1 - t) * t * t * x2 + t ** 3;
+    if (v < x) lo = t; else hi = t;
+  }
+  const t = (lo + hi) / 2;
+  return x >= 1 ? 1 : x <= 0 ? 0 : t * t * (3 - 2 * t);
+}
+
 /** A small accessible DOM navigation layer; background stars stay on the GPU. */
 export class StarMapUI {
   readonly element: HTMLElement;
@@ -24,7 +38,6 @@ export class StarMapUI {
   private readonly exploredGrowth = new Set<number>();
   private readonly options: StarMapUIOptions;
   private returnFocus: HTMLElement | null = null;
-  private transitionTimer = 0;
   private modalOpen = false;
   private visible = false;
   private reduced: boolean;
@@ -32,7 +45,10 @@ export class StarMapUI {
   private readonly voyager: HTMLElement;
   private readonly nodeGlyphs: HTMLElement[];
   private readonly arrivalItems: { element: HTMLElement; start: number; opacity: number }[];
-  private flight: Animation | null = null;
+  private flight: GlyphFlight | null = null;
+  private geometry: GlyphGeometry = { x: 0, y: 0, size: 96 };
+  private glyphHome: HTMLElement | null = null;
+  private activeGlyph: HTMLElement | null = null;
   private pointer = { x: 0, y: 0, targetX: 0, targetY: 0 };
 
   constructor(host: HTMLElement, options: StarMapUIOptions) {
@@ -164,10 +180,8 @@ export class StarMapUI {
     this.reduced = reduced;
     this.element.dataset.reduced = String(reduced);
     if (reduced && this.modalOpen) {
-      window.clearTimeout(this.transitionTimer);
       this.finishEntry();
     } else if (reduced && !this.modal.hidden) {
-      window.clearTimeout(this.transitionTimer);
       this.finishExit(true);
     }
   }
@@ -182,14 +196,27 @@ export class StarMapUI {
     if (!this.visible || document.hidden) return;
     const x = this.reduced || !this.modal.hidden ? 0 : this.pointer.targetX;
     const y = this.reduced || !this.modal.hidden ? 0 : this.pointer.targetY;
-    if (Math.abs(x - this.pointer.x) + Math.abs(y - this.pointer.y) < 0.0001) return;
-    const ease = this.reduced ? 1 : 1 - Math.exp(-Math.min(dt, 0.1) * 5.2);
-    this.pointer.x += (x - this.pointer.x) * ease;
-    this.pointer.y += (y - this.pointer.y) * ease;
-    // Direct compositor transforms avoid invalidating inherited CSS variables on
-    // every orbit/dust SVG element on every pointer frame.
-    const offset = `${(this.pointer.x * -7).toFixed(2)}px ${(this.pointer.y * -5).toFixed(2)}px`;
-    for (const glyph of this.nodeGlyphs) glyph.style.translate = offset;
+    if (Math.abs(x - this.pointer.x) + Math.abs(y - this.pointer.y) >= 0.0001) {
+      const ease = this.reduced ? 1 : 1 - Math.exp(-Math.min(dt, 0.1) * 5.2);
+      this.pointer.x += (x - this.pointer.x) * ease;
+      this.pointer.y += (y - this.pointer.y) * ease;
+      const offset = `${(this.pointer.x * -7).toFixed(2)}px ${(this.pointer.y * -5).toFixed(2)}px`;
+      for (const glyph of this.nodeGlyphs) glyph.style.translate = offset;
+    }
+    const flight = this.flight;
+    if (!flight) return;
+    flight.elapsed += Math.min(dt, .1) * 1000;
+    const progress = Math.min(1, flight.elapsed / flight.duration);
+    const eased = flightEase(progress, flight.leaving ? .45 : .4, flight.leaving ? .22 : .18);
+    const p = flight.hold ? Math.max(0, (eased - .18) / .82) : eased;
+    // The empty original holder still participates in the real layout/parallax.
+    const target = flight.leaving ? this.originGeometry(this.returnFocus!) : this.flightLayout();
+    this.placeGlyph({ x: flight.from.x + (target.x - flight.from.x) * p,
+      y: flight.from.y + (target.y - flight.from.y) * p,
+      size: flight.from.size + (target.size - flight.from.size) * p });
+    if (progress === 1) {
+      if (flight.leaving) this.finishExit(true); else this.finishEntry();
+    }
   }
 
   /** The owner changes the existing audio system and reports its actual state. */
@@ -221,12 +248,10 @@ export class StarMapUI {
     // Repeated Escape during flight/exit must not restart or cancel its cleanup.
     if (!this.modalOpen) {
       if (!restoreFocus) {
-        window.clearTimeout(this.transitionTimer);
         this.finishExit(false);
       }
       return;
     }
-    window.clearTimeout(this.transitionTimer);
     this.modalOpen = false;
     this.modal.classList.remove("is-ready");
     this.modal.dataset.journey = "leaving";
@@ -235,20 +260,16 @@ export class StarMapUI {
     this.options.onFocus(null);
     this.restoreRoute();
     if (this.reduced || !restoreFocus) { this.finishExit(restoreFocus); return; }
-    const current = getComputedStyle(this.voyager).transform;
-    this.flight?.cancel();
-    const origin = this.originGeometry(this.returnFocus!);
-    this.flight = this.voyager.animate([
-      { transform: current, offset: 0, opacity: 1 },
-      { transform: current, offset: 0.18, opacity: 1 },
-      { transform: this.flightTransform(origin.x, origin.y, origin.size / 420), offset: 1, opacity: 1 },
-    ], { duration: 920, easing: "cubic-bezier(.45,0,.22,1)", fill: "forwards" });
-    this.transitionTimer = window.setTimeout(() => this.finishExit(true), 920);
+    this.flight = { from: { ...this.geometry }, elapsed: 0, duration: 920, leaving: true, hold: true };
   }
 
   private finishExit(restoreFocus: boolean) {
-    this.flight?.cancel();
     this.flight = null;
+    // Move before hiding the overlay, atomically in this frame. Never recreate
+    // the artwork or re-run the home arrival/opacity animation.
+    if (this.activeGlyph && this.glyphHome) this.moveGlyph(this.glyphHome, this.activeGlyph);
+    else this.activeGlyph?.remove();
+    this.activeGlyph = this.glyphHome = null;
     this.modal.hidden = true;
     this.modal.classList.remove("is-ready");
     this.modal.dataset.journey = "idle";
@@ -265,7 +286,6 @@ export class StarMapUI {
   dispose() {
     this.hide();
     this.controller.abort();
-    window.clearTimeout(this.transitionTimer);
     this.element.remove();
   }
 
@@ -312,7 +332,6 @@ export class StarMapUI {
   }
 
   private enterDetail(origin: HTMLElement, route: string | null) {
-    window.clearTimeout(this.transitionTimer);
     if (route) {
       this.priorHash = location.hash.startsWith("#star/") ? "" : location.hash;
       history.replaceState(history.state, "", location.pathname + location.search + route);
@@ -324,26 +343,20 @@ export class StarMapUI {
     this.terminal.inert = true;
     const source = this.originGeometry(origin);
     const glyph = origin.querySelector<HTMLElement>(".sm-star-glyph");
-    this.voyager.querySelector(".sm-voyager-glyph")!.innerHTML = glyph?.innerHTML ?? galaxyGlyph(20);
+    const holder = this.voyager.querySelector<HTMLElement>(".sm-voyager-glyph")!;
+    this.glyphHome = glyph;
+    this.activeGlyph = glyph?.querySelector<HTMLElement>(".sm-node-visual") ?? null;
+    if (this.activeGlyph) this.moveGlyph(holder, this.activeGlyph);
+    else { holder.innerHTML = galaxyGlyph(20); this.activeGlyph = holder.firstElementChild as HTMLElement; }
     this.modal.style.setProperty("--star-color", getComputedStyle(origin).getPropertyValue("--star-color") || "#a8b9f5");
     const destination = this.flightLayout();
-    this.flight?.cancel();
-    this.voyager.style.transform = this.flightTransform(destination.x, destination.y, destination.size / 420);
-    if (!this.reduced) {
-      const start = this.flightTransform(source.x, source.y, source.size / 420);
-      this.flight = this.voyager.animate([
-        { transform: start, offset: 0 },
-        { transform: start, offset: 0.12 },
-        { transform: this.flightTransform(innerWidth * 0.5, innerHeight * 0.47, destination.size * 0.84 / 420), offset: 0.66 },
-        { transform: this.voyager.style.transform, offset: 1 },
-      ], { duration: 1100, easing: "cubic-bezier(.4,0,.18,1)", fill: "forwards" });
-    }
+    this.placeGlyph(this.reduced ? destination : source);
+    this.flight = this.reduced ? null : { from: source, elapsed: 0, duration: 1100, leaving: false, hold: false };
     this.home.classList.add("is-focusing");
     this.options.onFocus({ x: source.x / innerWidth, y: source.y / innerHeight });
     this.modal.focus({ preventScroll: true });
     this.home.inert = true;
     if (this.reduced) this.finishEntry();
-    else this.transitionTimer = window.setTimeout(() => this.finishEntry(), 1100);
     this.element.querySelector(".sm-announcer")!.textContent = "正在探索：" + this.modal.querySelector("h2")!.textContent;
   }
 
@@ -353,8 +366,27 @@ export class StarMapUI {
     return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2, size: glyph ? rect.width : 46 };
   }
 
-  private flightTransform(x: number, y: number, scale: number) {
-    return `translate3d(${x}px, ${y}px, 0) scale(${scale})`;
+  private placeGlyph(geometry: GlyphGeometry) {
+    this.geometry = geometry;
+    // Resize the SVG viewport instead of scaling a 420px wrapper. This keeps
+    // vector-effect strokes identical to the real home SVG at the handoff.
+    this.voyager.style.width = this.voyager.style.height = `${geometry.size}px`;
+    this.voyager.style.transform = `translate3d(${geometry.x - geometry.size / 2}px, ${geometry.y - geometry.size / 2}px, 0)`;
+  }
+
+  private moveGlyph(parent: HTMLElement, glyph: HTMLElement) {
+    const preserving = parent as HTMLElement & { moveBefore?: (node: Node, before: Node | null) => void };
+    if (preserving.moveBefore) { preserving.moveBefore(glyph, null); return; }
+    // Older engines retain the same DOM and restore CSS loop phase after a
+    // conventional move. Authored layer transforms still transition naturally.
+    const phases = glyph.getAnimations({ subtree: true }).filter((a): a is CSSAnimation => a instanceof CSSAnimation)
+      .map(a => ({ target: (a.effect as KeyframeEffect).target, name: a.animationName, time: a.currentTime }));
+    parent.append(glyph);
+    for (const animation of glyph.getAnimations({ subtree: true })) {
+      if (!(animation instanceof CSSAnimation)) continue;
+      const phase = phases.find(p => p.target === (animation.effect as KeyframeEffect).target && p.name === animation.animationName);
+      if (phase?.time != null) animation.currentTime = phase.time;
+    }
   }
 
   private flightLayout() {
@@ -376,10 +408,9 @@ export class StarMapUI {
 
   private finishEntry() {
     if (!this.modalOpen || !this.visible) return;
-    this.flight?.cancel();
     this.flight = null;
     const target = this.flightLayout();
-    this.voyager.style.transform = this.flightTransform(target.x, target.y, target.size / 420);
+    this.placeGlyph(target);
     this.modal.classList.add("is-ready");
     this.modal.dataset.journey = "detail";
     this.terminal.inert = false;
@@ -387,13 +418,11 @@ export class StarMapUI {
   }
 
   private onResize = () => {
-    if (this.modalOpen) {
-      window.clearTimeout(this.transitionTimer);
-      this.finishEntry();
-    } else if (!this.modal.hidden) {
-      window.clearTimeout(this.transitionTimer);
-      this.finishExit(true);
-    }
+    if (this.modal.hidden) return;
+    if (this.flight) {
+      this.flight = { ...this.flight, from: { ...this.geometry }, duration: Math.max(1, this.flight.duration - this.flight.elapsed), elapsed: 0, hold: false };
+      this.flightLayout();
+    } else if (this.modalOpen) this.placeGlyph(this.flightLayout());
   };
 
   private openGrowth(index: number, origin: HTMLElement) {

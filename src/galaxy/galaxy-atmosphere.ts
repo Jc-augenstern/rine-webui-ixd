@@ -18,6 +18,7 @@ export function createAtmosphere(uniforms: StarUniforms) {
     fragmentShader: /* glsl */ `
       varying vec2 vUv;
       uniform float uAspect;
+      uniform float uFlowDisplayGain;
       uniform vec2 uPointer;
       uniform float uFocus;
       uniform sampler2D uNebula;
@@ -30,7 +31,7 @@ export function createAtmosphere(uniforms: StarUniforms) {
         uv += vec2(uTarget.x - .5, .5 - uTarget.y) * uFocus * .075;
         vec2 materialUv = vec2(uv.x, 1. - uv.y);
         vec2 displacement = galaxyFlow(materialUv).zw;
-        uv -= displacement * vec2(1., -1.);
+        uv -= displacement * vec2(1., -1.) * uFlowDisplayGain;
         vec3 color = texture2D(uNebula, uv).rgb;
         // Keep text legible while leaving the entire diagonal river visible.
         float shade = 1.0 - .23 * exp(-length((vUv - vec2(.13,.78)) * vec2(2.,3.)));

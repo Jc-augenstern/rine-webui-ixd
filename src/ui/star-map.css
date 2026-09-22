@@ -107,7 +107,8 @@
 .sm-home.is-focusing .sm-star:not(.is-selected), .sm-home.is-focusing .sm-empty { opacity: 0; }
 .sm-home.is-focusing .sm-constellation, .sm-home.is-focusing .sm-growth, .sm-home.is-focusing .sm-map-coordinates { opacity: 0; }
 .sm-home.is-focusing .sm-header, .sm-home.is-focusing .sm-footer { opacity: .14; }
-.sm-home.is-focusing .sm-star.is-selected { opacity: 0; transition: none; }
+.sm-home.is-focusing .sm-star.is-selected { opacity: 1; transition: none; }
+.sm-home.is-focusing .sm-star.is-selected > :not(.sm-star-glyph) { visibility: hidden; }
 .sm-home.is-returning .sm-intro, .sm-home.is-returning .sm-star:not(.is-selected), .sm-home.is-returning .sm-empty,
 .sm-home.is-returning .sm-growth, .sm-home.is-returning .sm-header, .sm-home.is-returning .sm-footer { opacity: 1; transition-delay: .4s; }
 .sm-home.is-returning .sm-constellation { opacity: .75; transition-delay: .4s; }
@@ -162,11 +163,9 @@
 .sm-source { color: #788aa7; font-size: 9px; line-height: 1.7; margin-top: 27px !important; }
 .sm-root .sm-return-link { display: inline-block; color: #b7b3ed; font-size: 12px; letter-spacing: .04em; margin-top: 23px; min-height: 36px; }
 .sm-terminal-bottom { flex: none; margin-top: auto; padding: 11px 24px; display: flex; justify-content: space-between; border-top: 1px solid var(--sm-line); color: #6b80a0; font-size: 8px; letter-spacing: .13em; }
-.sm-voyager { position: absolute; left: -210px; top: -210px; width: 420px; height: 420px; transform-origin: center; pointer-events: none; color: var(--star-color); }
+.sm-voyager { position: absolute; left: 0; top: 0; width: 420px; height: 420px; transform-origin: center; pointer-events: none; color: var(--star-color); }
 .sm-voyager-glyph { position: absolute; inset: 0; }
-.sm-voyager .sm-galaxy-haze { opacity: 1; }
-.sm-modal[data-journey="entering"] .sm-voyager .sm-galaxy-haze { animation: sm-core-charge 1.1s ease both; }
-@keyframes sm-core-charge { 0% { transform: rotate(-24deg) scale(.8); } 18% { transform: rotate(-24deg) scale(1.5); } 100% { transform: rotate(-24deg) scale(1); } }
+.sm-modal:is([data-journey="entering"], [data-journey="detail"]) .sm-voyager .sm-galaxy-haze { opacity: 1; }
 .sm-voyager .sm-galaxy-orbits { opacity: .65; }
 .sm-voyager .sm-galaxy-glint { opacity: .35; }
 .sm-survey { position: absolute; inset: 0; width: 100%; height: 100%; fill: none; stroke: var(--star-color); stroke-width: .32; opacity: .58; }

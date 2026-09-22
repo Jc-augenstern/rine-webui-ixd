@@ -8,12 +8,14 @@
 
 完整交付与后续操作见 [交付报告](docs/DELIVERY.md)；运行检查与复测方法见 [验收记录](docs/VERIFICATION.md)。
 
+本轮默认深色、开屏/Welcome 恢复、尾流增强与星体连续归位的六项说明、实测数据及本地录屏索引见 [Beta 0.5 验收记录](docs/BETA05-VERIFICATION.md)。
+
 ## 本地启动
 
 需要 Node.js 22.12+，本次使用 Node.js 24。在 PowerShell 输入：
 
 ```powershell
-cd D:\Codex\Codex_IXD\rine-webui-ixd
+cd D:\Codex\Codex_Design_B\rine-webui-ixd
 npm ci
 npm run dev
 ```
@@ -22,7 +24,7 @@ npm run dev
 
 ## 测试登录
 
-打开首页显示约 1.5 秒文字预备屏，与随后的 Logo、登录和授权共用同一个终端背景。随后播放原 Logo 绘制，并用 0.72 秒同步左移和显现登录框，再停留在“身份接入”。Logo 绘制期间也可点右上角“前往登录”。密码行右侧眼睛可显示/隐藏密码。
+首次访问默认深色，保留已保存的浅色选择。打开首页时文字与进度条同步推进约 1.5 秒，再用 0.5 秒淡出前景；与随后的 Logo、登录和授权共用同一个终端背景。随后播放原 Logo 绘制，并用 0.72 秒同步左移和显现登录框，再停留在“身份接入”。Logo 绘制期间也可点右上角“前往登录”。密码行右侧眼睛可显示/隐藏密码。
 
 - 账号：`ixd-demo`
 - 密码：`ixd2026`

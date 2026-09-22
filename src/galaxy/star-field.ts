@@ -5,6 +5,7 @@ import { nebulaAtlas } from "./nebula-texture";
 export type StarUniforms = FieldUniforms & {
   uTime: { value: number };
   uMotion: { value: number };
+  uFlowDisplayGain: { value: number };
   uAspect: { value: number };
   uPixelRatio: { value: number };
   uPointer: { value: THREE.Vector2 };
@@ -29,6 +30,7 @@ const vertexShader = /* glsl */ `
   attribute vec2 aFlowOffset;
   uniform float uTime;
   uniform float uMotion;
+  uniform float uFlowDisplayGain;
   uniform float uAspect;
   uniform float uPixelRatio;
   uniform vec2 uPointer;
@@ -48,7 +50,7 @@ const vertexShader = /* glsl */ `
                                cos(uTime * 0.017 + aPhase)) * (0.009 + depth * 0.018);
     point.xy += uParallaxOffset * (1. - uLayerParallax);
     vec4 projected = projectionMatrix * modelViewMatrix * vec4(point, 1.0);
-    projected.xy += aFlowOffset / uFieldSize * vec2(2., -2.) * projected.w * uMotion;
+    projected.xy += aFlowOffset / uFieldSize * vec2(2., -2.) * projected.w * uMotion * uFlowDisplayGain;
     gl_Position = projected;
     gl_PointSize = clamp(aSize * uPixelRatio * 10.0 / max(4.0, - (modelViewMatrix * vec4(point, 1.0)).z),
                          1.0, 30.0 * uPixelRatio);

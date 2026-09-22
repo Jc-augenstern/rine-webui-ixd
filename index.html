@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-dark-surface="true">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#eef2f8" />
+    <meta name="theme-color" content="#111722" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
@@ -21,7 +21,7 @@
       // The same variables continue to be owned by paintTheme after startup.
       let entryPrefs = {};
       try { entryPrefs = JSON.parse(localStorage.getItem('rhine-settings') || '{}') || {}; } catch {}
-      const entryDark = entryPrefs.colorTheme === 'dark';
+      const entryDark = entryPrefs.colorTheme !== 'light';
       const entryRoot = document.documentElement;
       for (const [name, colors] of Object.entries({
         paper: ['#eef2f8', '#111722'], panel: ['#f8faff', '#1b2434'],
@@ -29,13 +29,15 @@
         line: ['#c4cddd', '#44526c'],
       })) entryRoot.style.setProperty('--theme-' + name, colors[entryDark ? 1 : 0]);
       entryRoot.dataset.darkSurface = String(entryDark);
+      entryRoot.style.colorScheme = entryDark ? 'dark' : 'light';
+      document.querySelector('meta[name="theme-color"]').content = entryDark ? '#111722' : '#eef2f8';
       entryRoot.dataset.terminalMotionPaused = String(document.hidden || (entryPrefs.reduced ?? matchMedia('(prefers-reduced-motion: reduce)').matches));
     </script>
     <style>
-      :root { --ixd-preparation-duration: 1500ms; --ixd-preparation-reveal: .24; }
-      html, body { margin: 0; background: var(--theme-paper, #eef2f8); }
+      :root { --ixd-preparation-duration: 1500ms; --ixd-preparation-fade: 500ms; color-scheme: dark; }
+      html, body { margin: 0; background: var(--theme-paper, #111722); }
       #viewport { position: relative; width: 100vw; height: 100dvh; overflow: hidden; }
-      #boot-background.terminal-background { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; background: radial-gradient(ellipse at 51% 48%, var(--theme-panel, #f8faff) 0%, var(--theme-paper, #eef2f8) 76%, var(--theme-field, #e5ebf5) 100%); }
+      #boot-background.terminal-background { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; background: radial-gradient(ellipse at 51% 48%, var(--theme-panel, #1b2434) 0%, var(--theme-paper, #111722) 76%, var(--theme-field, #253149) 100%); }
       [data-dark-surface="true"] #boot-background.terminal-background { background: radial-gradient(ellipse at 51% 48%, var(--theme-panel), var(--theme-paper) 76%); }
       [data-dark-surface="true"] #boot-background.terminal-background svg > g { stroke: var(--theme-line); }
       #boot-background.terminal-background > svg { display: block; width: 100%; height: 100%; opacity: .09; filter: blur(3px); animation: terminal-background-drift 48s ease-in-out infinite alternate; }
@@ -43,10 +45,12 @@
       [data-terminal-motion-paused="true"] #boot-background.terminal-background > svg { animation-play-state: paused; }
       #viewport[data-terminal-background="shared"] > #stage { background: transparent; }
       #viewport[data-terminal-background="shared"][data-experience="preparing"] > #stage { visibility: hidden; }
-      .startup-preparation { position: fixed; inset: 0; z-index: 60; display: flex; flex-direction: column; align-items: center; justify-content: center; background: transparent; color: var(--theme-ink, #1c2638); font-family: MiSans, sans-serif; }
+      .startup-preparation { position: fixed; inset: 0; z-index: 60; display: flex; flex-direction: column; align-items: center; justify-content: center; background: transparent; color: var(--theme-ink, #e8edf7); font-family: MiSans, sans-serif; }
       .startup-preparation[hidden] { display: none; }
       .preparation-access { width: min(440px, 90vw); height: 28px; text-align: center; font-size: clamp(13px, 1.25vw, 20px); letter-spacing: .04em; white-space: nowrap; }
-      .preparation-access > span { display: inline-block; animation: preparation-letters calc(var(--ixd-preparation-duration) * var(--ixd-preparation-reveal)) steps(26, end) both; }
+      .preparation-access > span { display: inline-block; animation: preparation-letters var(--ixd-preparation-duration) steps(26, end) both; }
+      .preparation-access .boot-phrase[hidden] { display: inline-flex; visibility: hidden; }
+      .preparation-access .boot-phrase-letter[hidden] { display: block; visibility: hidden; }
       .preparation-connection { margin-top: 30px; font-size: clamp(8px, .7vw, 11px); letter-spacing: 2px; opacity: .7; }
       .preparation-track { width: 180px; height: 1px; margin-top: 20px; background: color-mix(in srgb, currentColor 20%, transparent); overflow: hidden; }
       .preparation-track i { display: block; width: 100%; height: 100%; background: currentColor; transform-origin: left; animation: preparation-progress var(--ixd-preparation-duration) linear both; }

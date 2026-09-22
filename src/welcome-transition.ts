@@ -20,3 +20,16 @@ export function welcomeFlashState(elapsedMs: number) {
   }
   return WELCOME_FLASH_STATES[0];
 }
+
+/** B-only visibility cuts measured from ixd-bate0.2.mp4 at native 60 fps.
+ * Company begins at source frame 1236 (20.600s); database begins at 1280,
+ * with two observed off-pairs at 1282–1283 and 1288–1289. The archived
+ * strip expansion is reused separately; this does not alter A or C. */
+export function welcomeTextState(elapsedSeconds: number) {
+  const frame = Math.floor(elapsedSeconds * 60 + 1e-6);
+  return {
+    companyVisible: frame >= 0 && !(frame >= 2 && frame < 4),
+    companyMask: frame >= 6 && frame < 8,
+    databaseVisible: frame >= 44 && !(frame >= 46 && frame < 48) && !(frame >= 52 && frame < 54),
+  };
+}
