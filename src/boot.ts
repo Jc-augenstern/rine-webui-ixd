@@ -2,6 +2,7 @@ import { bootMotion } from "./boot-motion";
 import { IxdMotion } from "./ixd-mark";
 import { themeAmount } from "./theme-ui";
 import { BootLettering } from "./boot-lettering";
+import { welcomeFlashState } from "./welcome-transition";
 
 const ns = "http://www.w3.org/2000/svg";
 const arc = (r: number, start: number, sweep: number, x = 960, y = 540) => {
@@ -24,7 +25,7 @@ export class BootSequence {
   private poweredHTML: string;
   private accessLettering: BootLettering;
   private authLettering: BootLettering;
-  constructor(private stage: HTMLElement) {
+  constructor(private stage: HTMLElement, private sharedBackground?: HTMLElement) {
     [
       ".access-text",
       ".boot-logo",
@@ -44,7 +45,12 @@ export class BootSequence {
       "#boot-background",
       ".boot-background svg",
       ".boot-white",
-    ].forEach((s) => this.nodes.set(s, stage.querySelector<HTMLElement>(s)!));
+    ].forEach((s) => {
+      const shared = sharedBackground && (s === "#boot-background" ? sharedBackground
+        : s === ".boot-background svg" ? sharedBackground.querySelector<HTMLElement>("svg")
+        : s === ".boot-white" ? sharedBackground.querySelector<HTMLElement>(".boot-white") : null);
+      this.nodes.set(s, shared || stage.querySelector<HTMLElement>(s)!);
+    });
     const mark = stage.querySelector<SVGSVGElement>(".boot-logo svg")!;
     this.logoMotion = new IxdMotion(mark);
     this.logoMotion.render(0);
@@ -147,14 +153,19 @@ export class BootSequence {
     this.el(".welcome-highlight").style.clipPath =
       `inset(0 ${100 * (1 - s.highlight)}% 0 0)`;
     this.opacity(".welcome-database", s.databaseOpacity);
-    this.opacity(".welcome-logo", s.welcomeLogo);
-    this.opacity("#boot-background", s.backgroundOpacity);
-    this.opacity(".boot-white", s.white);
-    this.el(".boot-background svg").style.transform =
-      `translate(${Math.sin(t * 0.16) * 18}px, ${-(t - 6) * 5}px) scale(1.08)`;
+    if (!this.el(".welcome-logo").dataset.shared) this.opacity(".welcome-logo", s.welcomeLogo);
+    if (!this.sharedBackground) {
+      this.opacity("#boot-background", s.backgroundOpacity);
+      this.opacity(".boot-white", s.white);
+      this.el(".boot-background svg").style.transform =
+        `translate(${Math.sin(t * 0.16) * 18}px, ${-(t - 6) * 5}px) scale(1.08)`;
+    }
     return s;
   }
   private renderScan(s: ReturnType<typeof bootMotion>) {
+    this.core.removeAttribute("transform");
+    this.scanPaths.slice(0, 4).forEach(path => { path.style.opacity = "1"; });
+    [...this.orbitDots, ...this.satellites, ...this.caps].forEach(dot => { dot.style.opacity = "1"; });
     const { scan } = s,
       r = scan.radius;
     const group = this.scanPaths[0].parentElement!;
@@ -222,6 +233,57 @@ export class BootSequence {
     this.el(".scan > span").style.setProperty("--boot-phrase-tracking", `${s.scanTracking}px`);
     this.el(".scan > span").style.fontSize = `${s.scanFont}px`;
   }
+  /** IXD login owns its timing; the original mark drawing remains unchanged. */
+  renderLogin(drawSeconds: number, slide: number) {
+    const state = this.update(4.16 + drawSeconds);
+    const p = Math.max(0, Math.min(1, slide));
+    const eased = p * p * (3 - 2 * p);
+    this.el(".boot-logo").style.transform = `translate(${294 * (1 - eased)}px, 1px)`;
+    this.opacity(".auth-status", 0);
+    this.authLettering.setText("");
+    return state;
+  }
+  /** One local, discrete 300 ms cut; ring geometry is never dismantled. */
+  renderWelcomeFlash(elapsedMs: number) {
+    this.renderWelcome(19.2, 0);
+    const flash = welcomeFlashState(elapsedMs);
+    this.stage.dataset.welcomeFlashMs = elapsedMs.toFixed(3);
+    this.stage.dataset.welcomeFlashFrame = String(flash.sourceFrame);
+    this.el(".welcome-panel").style.backgroundColor = "var(--theme-ink)";
+    this.opacity(".welcome-panel", flash.panel);
+    this.el(".welcome-heading").style.color =
+      `color-mix(in srgb, var(--theme-ink) ${flash.ink * 100}%, var(--theme-panel))`;
+  }
+  renderWelcome(time: number, revealAge = Infinity) {
+    const state = this.update(time);
+    this.opacity(".scan", 0);
+    this.opacity(".welcome", 1);
+    this.el(".welcome").style.transform = "none";
+    this.el(".welcome").style.filter = "none";
+    this.opacity(".welcome-panel", 0);
+    this.el(".welcome-panel").style.removeProperty("background-color");
+    this.el(".welcome-heading").style.color = "var(--theme-ink)";
+    this.opacity(".boot-white", 0);
+    const reveal = (start: number, length: number) => {
+      const p = Math.max(0, Math.min(1, (revealAge - start) / length));
+      return p * p * (3 - 2 * p);
+    };
+    // Preserve the Welcome layout and shared Logo while avoiding additional
+    // text flashes after the measured three local rectangle pulses.
+    this.opacity(".welcome-company", reveal(.16, .12));
+    if (!this.el(".welcome-logo").dataset.shared) this.opacity(".welcome-logo", reveal(.16, .12));
+    this.opacity(".welcome-database", reveal(.42, .12));
+    this.companyInk[1].querySelector("span")!.style.opacity = "1";
+    this.el(".welcome-highlight").style.clipPath = "none";
+    delete this.stage.dataset.welcomeFlashMs;
+    delete this.stage.dataset.welcomeFlashFrame;
+    return state;
+  }
+  renderWelcomeExit(progress: number) {
+    this.renderWelcome(21.5);
+    const p = Math.max(0, Math.min(1, progress));
+    for (const key of [".welcome-heading", ".welcome-company", ".welcome-database"]) this.opacity(key, 1 - p * p * (3 - 2 * p));
+  }
   reset() {
     // Restore shared corner branding when skipping at any intermediate frame.
     [".brand", ".powered"].forEach((key) =>
@@ -229,6 +291,9 @@ export class BootSequence {
     );
     this.brandLines.forEach((node) => node.removeAttribute("style"));
     this.el(".powered").innerHTML = this.poweredHTML;
-    this.opacity("#boot-background", 0);
+    if (!this.sharedBackground) this.opacity("#boot-background", 0);
+    this.opacity(".welcome-panel", 0);
+    delete this.stage.dataset.welcomeFlashMs;
+    delete this.stage.dataset.welcomeFlashFrame;
   }
 }

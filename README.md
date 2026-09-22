@@ -13,7 +13,7 @@
 需要 Node.js 22.12+，本次使用 Node.js 24。在 PowerShell 输入：
 
 ```powershell
-cd D:\Codex\Codex_Design_B\rine-webui-ixd
+cd D:\Codex\Codex_IXD\rine-webui-ixd
 npm ci
 npm run dev
 ```
@@ -22,12 +22,12 @@ npm run dev
 
 ## 测试登录
 
-打开首页自动播放约 6 秒原有开场，再停留在“身份接入”；也可点右上角“前往登录”。
+打开首页显示约 1.5 秒文字预备屏，与随后的 Logo、登录和授权共用同一个终端背景。随后播放原 Logo 绘制，并用 0.72 秒同步左移和显现登录框，再停留在“身份接入”。Logo 绘制期间也可点右上角“前往登录”。密码行右侧眼睛可显示/隐藏密码。
 
 - 账号：`ixd-demo`
 - 密码：`ixd2026`
 - 点击 ACCESS SYSTEM，或在密码栏按 Enter。
-- 正确流程：AUTHENTICATING → IDENTITY CONFIRMED → PERMISSION AUTHORIZED → 2× WELCOME TO IXD CLUB → 星图。
+- 正确流程：AUTHENTICATING → IDENTITY CONFIRMED → PERMISSION AUTHORIZED → 300 毫秒局部闪烁 → WELCOME TO IXD CLUB → 星门 → 星图。授权主体保持 2× 速度。
 - 错误输入显示 ACCESS DENIED / INVALID IDENTITY，可修改后重试。
 - 星图底部“重新登录”重播开场；刷新页面也会重新登录。
 
@@ -46,11 +46,17 @@ npm run preview
 ## 网站功能
 
 - 可等待的登录状态与错误反馈；保留原有授权和 Welcome 动画，播放速度约 2 倍。
-- Three.js 多层星空、轻微鼠标视差、邻近微亮与少量星尘尾迹。
+- Three.js 多层星空、分层鼠标视差，以及具有持续速度与惯性的云带、已有星尘输运。
 - 六颗方向主星、六颗功能星、六颗不可进入的预留暗星。
 - 点击星星靠近目标，展开 IXD 数据终端；关闭或 Esc 返回；支持 Tab / Enter 与触摸。
 - 六方向定位、关键词、典型项目示例，成长星轨及竞赛轨道节点。
 - 保留声音/音乐/画质设置，减少动态效果、DPR/像素预算和 WebGL 静态回退。
+
+银河探索增强版将天空分为云带、远处密星、中景亮星和近景星尘四层。星系节点点击后锁定、矢量放大、推进并展开相连终端；返回时收束回原节点。实现、性能边界和复测方式见 [银河探索说明](docs/GALAXY-EXPLORATION.md)。
+
+本轮进一步加入云带与星点共享的鼠标局部形变、2.4 秒 IXD 星门过渡，以及十二种按用途设计的节点结构。参考视频实读、实现细节与行为验收见 [银河交互升级报告](docs/GALAXY-UPGRADE.md)。节点新增时需配置 `visualPreset`、`motionPreset` 和固定 `visualSeed`；图形与动画分别维护在 `src/ui/galaxy-glyph.ts` 和 `galaxy-glyph.css`。
+
+beta 0.3 已将上一段报告中的解析镜片替换为持续流场，并重排预备屏、同步登录和 Welcome 共享 Logo。beta 0.4 在此基础上缩短预备阶段、统一初始背景、按原片真实帧替换圆环收尾，并将鼠标输入改为快细慢粗、离开后仍继续演化的连续路径尾流。当前实现与验收见 [beta 0.4 记录](docs/BETA04-VERIFICATION.md)，[beta 0.3 记录](docs/BETA03-VERIFICATION.md) 保留为历史基线。
 
 内容来自用户 Word《IXD 社团架构方案》初稿，属于筹建规划。典型项目是示例，赛事是辅导方向。无来源的作品、获奖、人员、日期或报名渠道没有编造。
 

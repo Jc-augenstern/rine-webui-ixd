@@ -15,6 +15,9 @@ const hasNovecento = ["Normal", "DemiBold", "Bold"].every(weight =>
 export default defineConfig(({ mode }) => ({
   // Historical frame-comparison pages are not application entry points.
   optimizeDeps: { entries: ["index.html"] },
+  // Verification videos can be exclusively locked on Windows. Local test
+  // artifacts and their helper packages are not application source files.
+  server: { watch: { ignored: ["**/.tools/**"] } },
   base: mode === "wallpaper" ? "./" : "/",
   define: {
     __RHINE_MODELS__: JSON.stringify(Object.fromEntries(models.map(model => [model.key,model.fileName]))),

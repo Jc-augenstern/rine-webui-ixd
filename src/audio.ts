@@ -548,12 +548,12 @@ export class TerminalAudio {
     this.voices = [];
     this.lastSound.clear();
   }
-  setScene(scene: SoundScene) {
+  setScene(scene: SoundScene, preserveEffects = false) {
     if (this.scene === scene) return;
     this.scene = scene;
     this.bootTime = null;
     this.bootMix = -1;
-    this.stopEffects();
+    if (!preserveEffects) this.stopEffects();
     this.mixScene();
   }
   private mixScene() {
@@ -605,7 +605,12 @@ export class TerminalAudio {
       this.duck!.gain.linearRampToValueAtTime(1, now + 0.9);
     }
   }
-  updateBoot(appTime: number, frozen = false) {
+  /** State-driven IXD phases synchronize the music mix without seeking or
+   * stopping an already-playing cue; their reveal events own sound playback. */
+  syncBootClock(appTime: number) {
+    this.updateBoot(appTime, true, true);
+  }
+  updateBoot(appTime: number, frozen = false, preserveVoices = false) {
     const time = appTime + 5;
     const previous = this.bootTime;
     this.bootTime = time;
@@ -628,7 +633,7 @@ export class TerminalAudio {
       time < previous ||
       time - previous > 0.3
     ) {
-      this.stopEffects();
+      if (!preserveVoices) this.stopEffects();
       return;
     }
     for (const cue of BOOT_CUES)

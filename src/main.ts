@@ -51,10 +51,14 @@ const $ = <T extends HTMLElement = HTMLElement>(selector: string) =>
 import { brandHeading } from "./brand";
 import { ixdMark } from "./ixd-mark";
 
+const reviewParams = new URLSearchParams(import.meta.env.DEV || isWallpaper ? location.search : "");
+const legacyReview = import.meta.env.DEV && (reviewParams.has("time") || reviewParams.get("review") === "1" || reviewParams.get("experience") === "archive");
+const starExperience = !isWallpaper && !legacyReview;
+const terminalBackground = $("#boot-background");
+
 $("#stage").innerHTML = `
   <div id="three-scene" class="three-scene"></div>
   <div class="scene-atmosphere archive-atmosphere"></div>
-  <div id="boot-background" class="boot-background"><svg viewBox="0 0 1920 1080" preserveAspectRatio="none"><g fill="none" stroke="var(--theme-panel)" stroke-width="3"><path d="M-210 705C-45 705 182 704 247 567C337 377 99 306 4 435S27 680 169 631C309 584 227 314 279 111S568-113 568-113"/><path d="M1560-80C1374 114 1671 168 1601 323S1371 367 1431 480S1692 666 1559 787S1329 886 1498 1130"/><circle cx="1450" cy="648" r="346"/><circle cx="1450" cy="648" r="348"/></g></svg></div>
   <header class="brand">${brandHeading}</header>
   <nav class="system-nav" aria-label="系统导航">
     <button data-action="search"><span class="nav-glyph">⌕</span> ARCHIVE INDEX <span class="key">/</span></button>
@@ -88,14 +92,16 @@ $("#stage").innerHTML = `
   <footer class="system-footer"><span><i class="status-light"></i> SESSION AUTHORIZED${isWallpaper ? '<button type="button" class="three-toggle" data-action="toggle-three" aria-pressed="true" title="卸载三维模型，保留 2D 界面">3D 开启</button>' : ''}</span><span>IXD USER <i>／</i> <span id="clock">00:00:00</span></span><button data-action="replay" title="重播启动流程">REINITIALIZE ↗</button></footer>
   <div id="pwa-update-notice" class="pwa-update-notice" role="status" hidden><span>新版本已就绪</span><button data-pwa-action="update">更新并重启 ↻</button></div>
   <div id="modal-root"></div><div id="toast" class="toast" role="status"></div>
-  <div id="loading" class="loading"><div class="loading-mark">${ixdMark('loading-ixd')}</div><span>CONNECTING TO INTERNAL DATABASE</span><i></i></div>
 `;
 
-$("#boot-background").insertAdjacentHTML(
-  "beforeend",
-  '<div class="boot-white"></div>',
-);
-const bootSequence = new BootSequence($("#stage"));
+if (!starExperience) {
+  // The original archive/review clock still owns this same node in legacy mode.
+  terminalBackground.classList.remove("terminal-background");
+  $("#stage .archive-atmosphere").after(terminalBackground);
+  delete $("#viewport").dataset.terminalBackground;
+  delete $("#viewport").dataset.experience;
+}
+const bootSequence = new BootSequence($("#stage"), starExperience ? terminalBackground : undefined);
 $("#viewport").insertAdjacentHTML("beforeend", '<button class="mobile-entry" data-action="skip">进入档案 <span>→</span></button>');
 
 type Mode = "boot" | "archive" | "detail";
@@ -108,9 +114,6 @@ let modal: "search" | "saved" | "settings" | null = null,
   searchQuery = "",
   filter = "全部档案";
 let activeTab = "overview";
-const reviewParams = new URLSearchParams(import.meta.env.DEV || isWallpaper ? location.search : "");
-const legacyReview = import.meta.env.DEV && (reviewParams.has("time") || reviewParams.get("review") === "1" || reviewParams.get("experience") === "archive");
-const starExperience = !isWallpaper && !legacyReview;
 let frozenTime =
   reviewParams.get("freeze") === "1"
     ? Number(reviewParams.get("time") ?? 0)
@@ -161,6 +164,11 @@ const prefs = {
   colorTheme: storedPrefs.colorTheme === "dark" ? "dark" : "light",
 };
 paintTheme(prefs.colorTheme === "dark" ? 1 : 0);
+function syncTerminalBackgroundMotion() {
+  if (starExperience) document.documentElement.dataset.terminalMotionPaused = String(document.hidden || prefs.reduced || mode !== "boot");
+}
+syncTerminalBackgroundMotion();
+document.addEventListener("visibilitychange", syncTerminalBackgroundMotion);
 const rollingMotion = {
   duration: 460,
   motionBlur: true,
@@ -217,6 +225,11 @@ configureAudio();
 const reviewEntry = reviewParams.has("scene") || reviewParams.has("time") || reviewParams.get("review") === "1";
 let started = false;
 const loading = $("#loading");
+if (!starExperience) {
+  loading.className = "loading";
+  loading.innerHTML = '<span>CONNECTING TO INTERNAL DATABASE</span><i></i>';
+  loading.dataset.bound = "true";
+}
 // The entry screen uses the actual viewport, including portrait phones; the
 // reference animation still uses its calibrated 1920 x 1080 stage.
 $("#viewport").append(loading);
@@ -257,6 +270,7 @@ function superPerformanceEnabled() { return isWallpaper ? wallpaperHost()?.prope
 function effectiveRenderQuality() { return superPerformanceEnabled() ? superPerformanceQuality : prefs.rendering; }
 function savePrefs() {
   saveAudioPrefs();
+  syncTerminalBackgroundMotion();
   experience?.configure();
   if (prefs.reduced) {
     rollingTitles.forEach(title => title.finish());
@@ -349,6 +363,7 @@ function setMode(next: Mode) {
   }
   if (next === "detail" && mode !== "detail") recordAccess();
   mode = next;
+  syncTerminalBackgroundMotion();
   syncWallpaperBackground();
   audio.setScene(next);
   if (next !== "boot" && audioPreview) {
@@ -1114,6 +1129,22 @@ async function toggleThree() {
 
 async function start() {
   try {
+    if (starExperience) {
+      // All essential next-stage marks/lettering have inline SVG fallbacks.
+      // Font preparation runs alongside the three-second screen, never the whole sky.
+      void loadBootWebfonts();
+      void Promise.allSettled([
+        document.fonts.load("400 20px MiSans", "身份接入账户密码"),
+        document.fonts.load("700 20px MiSans", "IXD WELCOME TO INTERNAL DATABASE"),
+      ]);
+      threeState = "off";
+      syncThreeButton();
+      savePrefs();
+      ready = true;
+      select(0);
+      completeStartup(false);
+      return;
+    }
     if (isWallpaper) await window.rhineWallpaperPropertiesReady;
     if (!starExperience && (!isWallpaper || wallpaperHost()?.properties.load3donstartup?.value !== false)) {
       scene = new ArchiveScene($("#three-scene"));
@@ -1167,9 +1198,14 @@ function completeStartup(silent: boolean) {
   setMode("boot");
   if (starExperience) {
     experience = new IxdExperience({
-      host: $("#viewport"), stage: $("#stage"), boot: bootSequence, audio,
+      host: $("#viewport"), stage: $("#stage"), preparation: loading, boot: bootSequence, audio,
       reduced: () => prefs.reduced, quality: effectiveRenderQuality,
-      onGalaxy: () => setMode("archive"), onReplay: () => replayBoot(),
+      onGalaxy: () => {
+        // The reduced portal can finish before its Welcome/arrival voices.
+        // Let those voices decay; replay, mute and hidden-page cleanup still stop them.
+        audio.setScene("archive", true);
+        setMode("archive");
+      }, onReplay: () => replayBoot(),
       onSettings: () => openModal("settings"),
       onSound: () => { prefs.sound = !prefs.sound; prefs.music = prefs.sound; saveAudioPrefs(); experience?.setSound(prefs.sound); if (prefs.sound) void audio.unlock().catch(() => false); },
     });
@@ -1182,6 +1218,7 @@ function completeStartup(silent: boolean) {
   if (isWallpaper && wallpaperHost()?.properties.boot?.value === false) setMode("archive");
   $("#stage").inert = false;
   $(".mobile-entry").inert = false;
+  if (!starExperience) {
   loading.classList.add("loaded");
   loading.inert = true;
   setTimeout(() => {
@@ -1193,6 +1230,7 @@ function completeStartup(silent: boolean) {
       target.focus({ preventScroll: true });
     }
   }, fade);
+  }
   requestAnimationFrame(frame);
   // Do not compete with entry audio/font downloads. Full offline installation
   // begins after startup is complete and remains atomic.
@@ -1264,6 +1302,9 @@ void start();
 // Deterministic review controls: the running application, never a video surrogate.
 Object.assign(window, {
   rhine: {
+    ...(import.meta.env.DEV ? {
+      debugGalaxy: (options: Parameters<IxdExperience["debug"]>[0]) => experience?.debug(options),
+    } : {}),
     // The review button supplies a real user activation. Preferences stay local to this preview.
     playBootPreview: async (music = false) => {
       if (!ready || !navigator.userActivation.isActive) return false;
@@ -1307,4 +1348,4 @@ Object.assign(window, {
     }),
   },
 });
-if (import.meta.hot) import.meta.hot.dispose(() => { audio.dispose(); experience?.dispose(); });
+if (import.meta.hot) import.meta.hot.dispose(() => { document.removeEventListener("visibilitychange", syncTerminalBackgroundMotion); audio.dispose(); experience?.dispose(); });

@@ -3,6 +3,7 @@ import { escapeHtml as escape } from "../html";
 import { contentSource, growthSteps, type ClubContent } from "../data/club-content";
 import { constellationLinks, starMap, type StarMapNode, type StarPosition } from "../data/star-map";
 import "./star-map.css";
+import { galaxyGlyph, dormantGlyph, surveyMarkup } from "./galaxy-glyph";
 
 export interface StarMapUIOptions {
   onFocus: (position: StarPosition | null) => void;
@@ -28,6 +29,11 @@ export class StarMapUI {
   private visible = false;
   private reduced: boolean;
   private priorHash = "";
+  private readonly voyager: HTMLElement;
+  private readonly nodeGlyphs: HTMLElement[];
+  private readonly arrivalItems: { element: HTMLElement; start: number; opacity: number }[];
+  private flight: Animation | null = null;
+  private pointer = { x: 0, y: 0, targetX: 0, targetY: 0 };
 
   constructor(host: HTMLElement, options: StarMapUIOptions) {
     this.options = options;
@@ -69,6 +75,9 @@ export class StarMapUI {
         </footer>
       </div>
       <section class="sm-modal" role="dialog" aria-modal="true" aria-labelledby="sm-detail-title" tabindex="-1" hidden>
+        <button type="button" class="sm-flight-cancel" data-action="close">← 返回星图</button>
+        <div class="sm-voyager" aria-hidden="true"><div class="sm-voyager-glyph"></div>${surveyMarkup}</div>
+        <div class="sm-focus-link" aria-hidden="true"><span>IXD / DATA LINK</span></div>
         <div class="sm-focus-caption" aria-hidden="true"></div>
         <article class="sm-terminal">
           <header class="sm-terminal-top"><span>IXD ANALYSIS OS <b>/ DATA TERMINAL</b></span><button type="button" class="sm-close" data-action="close" aria-label="关闭详情，返回星图">返回星图 <span aria-hidden="true">×</span></button></header>
@@ -81,14 +90,30 @@ export class StarMapUI {
     this.home = this.element.querySelector(".sm-home")!;
     this.modal = this.element.querySelector(".sm-modal")!;
     this.terminal = this.element.querySelector(".sm-terminal")!;
+    this.voyager = this.element.querySelector(".sm-voyager")!;
+    this.nodeGlyphs = [...this.home.querySelectorAll<HTMLElement>(".sm-star-glyph")];
+    this.arrivalItems = [...this.home.querySelectorAll<HTMLElement>(".sm-star,.sm-empty,.sm-header,.sm-intro,.sm-constellation,.sm-map-coordinates,.sm-growth,.sm-footer")].map((element) => {
+      const star = starMap.find(node => node.id === element.dataset.star);
+      const start = star?.id === "core" ? .52 : star?.type === "direction" ? .06 + Number(star.number) * .055
+        : star ? .27 + starMap.filter(node => node.type === "function").indexOf(star) * .055
+        : element.classList.contains("sm-intro") ? .4 : .56;
+      return { element, start, opacity: element.classList.contains("sm-constellation") ? .75 : 1 };
+    });
     this.setReduced(options.reduced);
     const { signal } = this.controller;
     this.element.addEventListener("click", this.onClick, { signal });
     this.element.addEventListener("keydown", this.onKeyDown, { signal });
+    window.addEventListener("resize", this.onResize, { signal });
+    document.addEventListener("visibilitychange", () => {
+      this.element.dataset.pageHidden = String(document.hidden);
+    }, { signal });
   }
 
   show() {
     if (this.visible) return;
+    delete this.element.dataset.arrival;
+    this.element.inert = false;
+    for (const { element } of this.arrivalItems) element.style.removeProperty("opacity");
     this.visible = true;
     this.element.hidden = false;
     this.element.scrollTop = 0;
@@ -106,15 +131,65 @@ export class StarMapUI {
     this.closeDetail(false);
     this.element.classList.remove("is-visible");
     this.element.hidden = true;
+    this.element.inert = false;
+    delete this.element.dataset.arrival;
+    for (const { element } of this.arrivalItems) element.style.removeProperty("opacity");
   }
+
+  prepareArrival() {
+    this.element.hidden = false;
+    this.element.inert = true;
+    this.home.inert = true;
+    this.element.scrollTop = 0;
+    this.element.dataset.arrival = "true";
+    this.updateArrival(0);
+  }
+
+  updateArrival(progress: number) {
+    for (const { element, start, opacity } of this.arrivalItems) {
+      const p = Math.max(0, Math.min(1, (progress - start) / .26));
+      element.style.opacity = String(p * p * (3 - 2 * p) * opacity);
+    }
+  }
+
+  portalAnchor() {
+    const core = this.home.querySelector<HTMLElement>('[data-star="core"] .sm-star-glyph')!.getBoundingClientRect();
+    const host = this.element.parentElement!.getBoundingClientRect();
+    return { x: core.left + core.width / 2 - host.left, y: core.top + core.height / 2 - host.top, size: core.width };
+  }
+
+  focusHome() { this.home.querySelector<HTMLElement>('[data-star="core"]')?.focus({ preventScroll: true }); }
 
   setReduced(reduced: boolean) {
     this.reduced = reduced;
     this.element.dataset.reduced = String(reduced);
     if (reduced && this.modalOpen) {
       window.clearTimeout(this.transitionTimer);
-      this.modal.classList.add("is-ready");
+      this.finishEntry();
+    } else if (reduced && !this.modal.hidden) {
+      window.clearTimeout(this.transitionTimer);
+      this.finishExit(true);
     }
+  }
+
+  setPointer(x: number, y: number) {
+    this.pointer.targetX = x;
+    this.pointer.targetY = y;
+  }
+
+  /** Shares the app's frame clock; only the node artwork drifts, never its hitbox. */
+  update(dt: number) {
+    if (!this.visible || document.hidden) return;
+    const x = this.reduced || !this.modal.hidden ? 0 : this.pointer.targetX;
+    const y = this.reduced || !this.modal.hidden ? 0 : this.pointer.targetY;
+    if (Math.abs(x - this.pointer.x) + Math.abs(y - this.pointer.y) < 0.0001) return;
+    const ease = this.reduced ? 1 : 1 - Math.exp(-Math.min(dt, 0.1) * 5.2);
+    this.pointer.x += (x - this.pointer.x) * ease;
+    this.pointer.y += (y - this.pointer.y) * ease;
+    // Direct compositor transforms avoid invalidating inherited CSS variables on
+    // every orbit/dust SVG element on every pointer frame.
+    const offset = `${(this.pointer.x * -7).toFixed(2)}px ${(this.pointer.y * -5).toFixed(2)}px`;
+    for (const glyph of this.nodeGlyphs) glyph.style.translate = offset;
   }
 
   /** The owner changes the existing audio system and reports its actual state. */
@@ -126,7 +201,7 @@ export class StarMapUI {
 
   /** Also supports future navigation or deep links without synthesizing clicks. */
   openStar(id: string): boolean {
-    if (!this.visible || this.modalOpen) return false;
+    if (!this.visible || !this.modal.hidden) return false;
     const star = starMap.find((node) => node.id === id);
     if (!star?.enabled || !star.content) return false;
     const button = this.element.querySelector<HTMLElement>(`[data-star="${star.id}"]`)!;
@@ -143,33 +218,48 @@ export class StarMapUI {
   }
 
   closeDetail(restoreFocus = true) {
-    // Repeated Escape during the 180 ms exit must not cancel its cleanup.
+    // Repeated Escape during flight/exit must not restart or cancel its cleanup.
     if (!this.modalOpen) {
       if (!restoreFocus) {
         window.clearTimeout(this.transitionTimer);
-        this.modal.hidden = true;
-        this.home.inert = false;
+        this.finishExit(false);
       }
       return;
     }
     window.clearTimeout(this.transitionTimer);
     this.modalOpen = false;
     this.modal.classList.remove("is-ready");
-    this.home.classList.remove("is-focusing");
+    this.modal.dataset.journey = "leaving";
+    this.terminal.inert = true;
+    this.home.classList.add("is-returning");
     this.options.onFocus(null);
     this.restoreRoute();
+    if (this.reduced || !restoreFocus) { this.finishExit(restoreFocus); return; }
+    const current = getComputedStyle(this.voyager).transform;
+    this.flight?.cancel();
+    const origin = this.originGeometry(this.returnFocus!);
+    this.flight = this.voyager.animate([
+      { transform: current, offset: 0, opacity: 1 },
+      { transform: current, offset: 0.18, opacity: 1 },
+      { transform: this.flightTransform(origin.x, origin.y, origin.size / 420), offset: 1, opacity: 1 },
+    ], { duration: 920, easing: "cubic-bezier(.45,0,.22,1)", fill: "forwards" });
+    this.transitionTimer = window.setTimeout(() => this.finishExit(true), 920);
+  }
+
+  private finishExit(restoreFocus: boolean) {
+    this.flight?.cancel();
+    this.flight = null;
+    this.modal.hidden = true;
+    this.modal.classList.remove("is-ready");
+    this.modal.dataset.journey = "idle";
+    this.home.inert = false;
+    this.home.classList.remove("is-focusing", "is-returning");
+    delete this.modal.dataset.activeStar;
     this.home.querySelectorAll<HTMLElement>(".is-selected").forEach((node) => {
       node.classList.remove("is-selected");
       node.setAttribute("aria-expanded", "false");
     });
-    const finish = () => {
-      this.modal.hidden = true;
-      this.home.inert = false;
-      delete this.modal.dataset.activeStar;
-      if (restoreFocus && this.visible && this.returnFocus?.isConnected) this.returnFocus.focus({ preventScroll: true });
-    };
-    if (this.reduced || !restoreFocus) finish();
-    else this.transitionTimer = window.setTimeout(finish, 180);
+    if (restoreFocus && this.visible && this.returnFocus?.isConnected) this.returnFocus.focus({ preventScroll: true });
   }
 
   dispose() {
@@ -182,9 +272,9 @@ export class StarMapUI {
   private starMarkup(star: StarMapNode) {
     const mobile = star.mobilePosition ?? star.position;
     const style = `--x:${star.position.x * 100}%;--y:${star.position.y * 100}%;--mx:${mobile.x * 100}%;--my:${mobile.y * 100}%;--star-color:${star.color ?? "#97aacd"};--brightness:${star.brightness}`;
-    if (!star.enabled) return `<span class="sm-empty" style="${style}" tabindex="0" role="img" aria-label="未探索星，等待下一次探索，暂不可进入"><i></i><span>UNEXPLORED<br><b>等待下一次探索</b></span></span>`;
-    return `<button type="button" class="sm-star sm-star-${star.type}" style="${style}" data-star="${star.id}" data-route="${escape(star.route ?? "")}" aria-label="${escape(star.title)}，打开详情" aria-haspopup="dialog" aria-expanded="false">
-      <span class="sm-star-glyph" aria-hidden="true"><i></i></span>
+    if (!star.enabled) return `<span class="sm-empty" style="${style}" tabindex="0" role="img" aria-label="未探索星，等待下一次探索，暂不可进入"><i class="sm-empty-glyph">${dormantGlyph(star)}</i><span>UNEXPLORED<br><b>等待下一次探索</b></span></span>`;
+    return `<button type="button" class="sm-star sm-star-${star.type}" style="${style}" data-star="${star.id}" data-visual-preset="${star.visualPreset}" data-motion-preset="${star.motionPreset}" data-route="${escape(star.route ?? "")}" aria-label="${escape(star.title)}，打开详情" aria-haspopup="dialog" aria-expanded="false">
+      <span class="sm-star-glyph" aria-hidden="true">${galaxyGlyph(star)}</span>
       ${star.number ? `<span class="sm-star-number" aria-hidden="true">${star.number}</span>` : ""}
       <span class="sm-star-label">${escape(star.title)}<span class="sm-star-meta">${escape(star.type === "direction" ? star.content!.eyebrow : star.subtitle)}</span></span>
       <span class="sm-star-hover" aria-hidden="true">${star.type === "direction" ? escape(star.subtitle) : "探索社团节点"} <b>↗</b></span>
@@ -203,7 +293,7 @@ export class StarMapUI {
   }
 
   private renderDetail(title: string, content: ClubContent, code: string, direction = false) {
-    this.element.querySelector(".sm-focus-caption")!.innerHTML = `<span>${escape(code)}</span><div class="sm-focus-symbol">✧</div><p>${escape(title)}</p><small>COORDINATE LOCKED</small>`;
+    this.element.querySelector(".sm-focus-caption")!.innerHTML = `<span>${escape(code)}</span><p>${escape(title)}</p><small>COORDINATE LOCKED / 星系已连接</small>`;
     const scroll = this.element.querySelector<HTMLElement>(".sm-detail-scroll")!;
     scroll.innerHTML = `
       <p class="sm-detail-code">${escape(code)} <span> / IXD</span></p>
@@ -229,23 +319,85 @@ export class StarMapUI {
     }
     this.modalOpen = true;
     this.modal.hidden = false;
+    this.modal.classList.remove("is-ready");
+    this.modal.dataset.journey = "entering";
+    this.terminal.inert = true;
+    const source = this.originGeometry(origin);
+    const glyph = origin.querySelector<HTMLElement>(".sm-star-glyph");
+    this.voyager.querySelector(".sm-voyager-glyph")!.innerHTML = glyph?.innerHTML ?? galaxyGlyph(20);
+    this.modal.style.setProperty("--star-color", getComputedStyle(origin).getPropertyValue("--star-color") || "#a8b9f5");
+    const destination = this.flightLayout();
+    this.flight?.cancel();
+    this.voyager.style.transform = this.flightTransform(destination.x, destination.y, destination.size / 420);
+    if (!this.reduced) {
+      const start = this.flightTransform(source.x, source.y, source.size / 420);
+      this.flight = this.voyager.animate([
+        { transform: start, offset: 0 },
+        { transform: start, offset: 0.12 },
+        { transform: this.flightTransform(innerWidth * 0.5, innerHeight * 0.47, destination.size * 0.84 / 420), offset: 0.66 },
+        { transform: this.voyager.style.transform, offset: 1 },
+      ], { duration: 1100, easing: "cubic-bezier(.4,0,.18,1)", fill: "forwards" });
+    }
     this.home.classList.add("is-focusing");
-    const rect = origin.getBoundingClientRect();
-    this.options.onFocus({ x: (rect.left + rect.width / 2) / window.innerWidth, y: (rect.top + rect.height / 2) / window.innerHeight });
+    this.options.onFocus({ x: source.x / innerWidth, y: source.y / innerHeight });
     this.modal.focus({ preventScroll: true });
     this.home.inert = true;
-    const ready = () => {
-      if (!this.modalOpen || !this.visible) return;
-      this.modal.classList.add("is-ready");
-      this.modal.querySelector<HTMLButtonElement>(".sm-close")!.focus({ preventScroll: true });
-    };
-    if (this.reduced) ready();
-    else this.transitionTimer = window.setTimeout(ready, 350);
+    if (this.reduced) this.finishEntry();
+    else this.transitionTimer = window.setTimeout(() => this.finishEntry(), 1100);
     this.element.querySelector(".sm-announcer")!.textContent = "正在探索：" + this.modal.querySelector("h2")!.textContent;
   }
 
+  private originGeometry(origin: HTMLElement) {
+    const glyph = origin.querySelector<HTMLElement>(".sm-star-glyph");
+    const rect = (glyph ?? origin).getBoundingClientRect();
+    return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2, size: glyph ? rect.width : 46 };
+  }
+
+  private flightTransform(x: number, y: number, scale: number) {
+    return `translate3d(${x}px, ${y}px, 0) scale(${scale})`;
+  }
+
+  private flightLayout() {
+    const mobile = innerWidth <= 760;
+    const compact = innerWidth <= 1100;
+    const x = innerWidth * (mobile ? 0.5 : compact ? 0.19 : 0.27);
+    const y = mobile && innerHeight > 600 ? 103 : innerHeight * 0.46;
+    const size = mobile ? 160 : Math.min(420, innerWidth * 0.32, innerHeight * 0.55);
+    this.modal.style.setProperty("--focus-x", `${x}px`);
+    this.modal.style.setProperty("--focus-y", `${y}px`);
+    this.modal.style.setProperty("--focus-size", `${size}px`);
+    const link = this.modal.querySelector<HTMLElement>(".sm-focus-link")!;
+    const start = x + size * 0.34;
+    link.style.left = `${start}px`;
+    link.style.top = `${y}px`;
+    link.style.width = `${Math.max(0, this.terminal.offsetLeft - start)}px`;
+    return { x, y, size };
+  }
+
+  private finishEntry() {
+    if (!this.modalOpen || !this.visible) return;
+    this.flight?.cancel();
+    this.flight = null;
+    const target = this.flightLayout();
+    this.voyager.style.transform = this.flightTransform(target.x, target.y, target.size / 420);
+    this.modal.classList.add("is-ready");
+    this.modal.dataset.journey = "detail";
+    this.terminal.inert = false;
+    this.modal.querySelector<HTMLButtonElement>(".sm-close")!.focus({ preventScroll: true });
+  }
+
+  private onResize = () => {
+    if (this.modalOpen) {
+      window.clearTimeout(this.transitionTimer);
+      this.finishEntry();
+    } else if (!this.modal.hidden) {
+      window.clearTimeout(this.transitionTimer);
+      this.finishExit(true);
+    }
+  };
+
   private openGrowth(index: number, origin: HTMLElement) {
-    if (this.modalOpen || !growthSteps[index]) return;
+    if (!this.modal.hidden || !growthSteps[index]) return;
     const step = growthSteps[index];
     this.returnFocus = origin;
     this.exploredGrowth.add(index);
@@ -296,6 +448,7 @@ export class StarMapUI {
       event.stopPropagation();
       if (event.key === "Escape") { event.preventDefault(); this.closeDetail(); }
       if (event.key === "Tab") {
+        if (!this.modal.classList.contains("is-ready")) { event.preventDefault(); return; }
         const stops = [...this.terminal.querySelectorAll<HTMLElement>('button:not([disabled]), a[href], [tabindex="0"]')];
         const first = stops[0], last = stops[stops.length - 1];
         const current = document.activeElement;

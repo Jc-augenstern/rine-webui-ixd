@@ -1,0 +1,12 @@
+.ixd-portal { position: absolute; inset: 0; z-index: 24; pointer-events: none; overflow: hidden; }
+.ixd-portal[hidden] { display: none; }
+.ixd-portal-frame { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; fill: none; stroke-linecap: round; }
+.ixd-portal-edge { stroke: #9cb8e8; stroke-width: 1.3; }
+.ixd-portal-echo { stroke: #7776bf; stroke-width: .65; opacity: .55; }
+.ixd-portal-lines { stroke: #79869e; stroke-width: .75; }
+.ixd-portal-dust { fill: #c0def9; stroke: none; }
+.ixd-portal-core { position: absolute; left: 0; top: 0; width: 52px; height: 52px; will-change: transform; }
+.ixd-portal-core .ixd-mark { width: 100%; height: 100%; overflow: visible; }
+.ixd-portal-skip { position: absolute; right: max(28px, env(safe-area-inset-right)); bottom: max(26px, env(safe-area-inset-bottom)); pointer-events: auto; padding: 10px 14px; color: #9caac4; background: #0b1124dc; border: 1px solid #576080; font-size: 11px; letter-spacing: .12em; }
+.ixd-portal-skip span { margin-left: 15px; }
+.ixd-portal[data-reduced="true"] .ixd-portal-frame { display: none; }

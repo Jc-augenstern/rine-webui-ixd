@@ -1,0 +1,87 @@
+/* One vector language, twelve authored spatial organizations. All detail
+   structure remains SVG; only the very soft, small core atmosphere is CSS. */
+.sm-node-visual { position: absolute; inset: 0; color: inherit; pointer-events: none; }
+.sm-node-visual .gg-vector { overflow: visible; fill: none; }
+.gg-vector :is(path, circle, ellipse, line, polygon) { vector-effect: non-scaling-stroke; }
+.gg-line { fill: none; stroke: currentColor; stroke-width: .75; stroke-linecap: round; stroke-linejoin: round; opacity: .66; }
+.gg-line.gg-faint { opacity: .28; stroke-width: .6; }
+.gg-line.gg-strong { opacity: .85; stroke-width: 1.05; }
+.gg-line.gg-tick { opacity: .75; stroke-width: .9; }
+.gg-core { fill: #f0f5ff; stroke: none; }
+.gg-corona { fill: currentColor; opacity: .3; stroke: none; }
+.gg-aura { fill: currentColor; opacity: .085; stroke: none; }
+.gg-dust { fill: currentColor; stroke: none; }
+.gg-joint-dot { fill: #101c32; stroke: currentColor; stroke-width: .85; }
+.gg-line.gg-joint { opacity: .6; stroke-width: .95; }
+.gg-line.gg-facet { opacity: .82; stroke-width: .78; }
+.gg-line.gg-logo-frame { opacity: .92; stroke-width: 1.45; }
+.gg-line.gg-logo-strokes { opacity: .72; stroke-width: 1.05; }
+.gg-logo-arrow { fill: currentColor; opacity: .9; }
+.gg-ribbon { stroke: currentColor; stroke-width: 6; opacity: .075; fill: none; stroke-linecap: round; }
+.gg-line.gg-arm-spine { opacity: .6; }
+.gg-shell-haze { stroke: currentColor; stroke-width: 7; opacity: .085; fill: none; stroke-linecap: round; }
+.gg-prism-fill { fill: currentColor; fill-opacity: .055; stroke: none; }
+.gg-line.gg-ring { opacity: .5; stroke-width: .78; }
+.gg-line.gg-ring-segment { opacity: .78; stroke-width: 1.35; }
+.gg-line.gg-comet-stream { opacity: .52; }
+.gg-line.gg-guide { stroke-dasharray: 50; stroke-dashoffset: 44; opacity: 0; transition: stroke-dashoffset .7s, opacity .45s; }
+.gg-signal { fill: none; stroke: #e3edff; stroke-width: 1.25; stroke-linecap: round; stroke-dasharray: 4 96; stroke-dashoffset: 102; opacity: 0; }
+.gg-part { transform-box: view-box; transform-origin: 0 0; transform: none; transition: transform .68s cubic-bezier(.2,.75,.25,1), opacity .35s; transition-delay: var(--gg-delay, 0ms); }
+.gg-hover-survey { opacity: 0; transition: opacity .3s; }
+.sm-node-visual .gg-haze { opacity: .55; transform: none; background: radial-gradient(ellipse 28% 28% at 50% 50%, color-mix(in srgb, var(--star-color) 26%, transparent), transparent 92%); }
+.sm-node-visual[data-preset="neural-cluster"] .gg-haze { background: radial-gradient(ellipse 18% 18% at 27% 33%, #a496fb24, transparent 95%), radial-gradient(ellipse 18% 18% at 70% 29%, #90bdfc21, transparent 95%), radial-gradient(ellipse 23% 23% at 50% 51%, #b3c4fc22, transparent 95%); }
+.sm-node-visual[data-preset="binary-mechanism"] .gg-haze { background: radial-gradient(ellipse 19% 17% at 37% 43%, #95b8ff35, transparent 95%), radial-gradient(ellipse 19% 17% at 63% 57%, #95b8ff35, transparent 95%); }
+.sm-node-visual[data-preset="asymmetric-arms"] .gg-haze { transform: rotate(-30deg); background: radial-gradient(ellipse 43% 24% at 47% 51%, #9c9deb27, transparent 96%); }
+.sm-node-visual[data-preset="spatial-gate"] .gg-haze { background: radial-gradient(ellipse 20% 29% at 67% 49%, #7dd0f130, transparent 95%); }
+.sm-node-visual[data-preset="ascent-comet"] .gg-haze { background: radial-gradient(ellipse 20% 20% at 72% 30%, #bbcdfb35, transparent 95%); }
+.sm-node-visual[data-preset="prism-shards"] .gg-haze { opacity: .3; }
+
+/* Hover affects only artwork. The 44px navigation hitbox stays stationary. */
+.sm-star:is(:hover, :focus-visible) .gg-part { transform: var(--gg-hover, none); }
+.sm-star:is(:hover, :focus-visible) .gg-signal,
+.sm-modal:is([data-journey="entering"], [data-journey="detail"]) .gg-signal { opacity: .94; animation: gg-signal-travel 1.8s linear infinite; animation-delay: var(--gg-pulse-delay, 0s); }
+.sm-star:is(:hover, :focus-visible) .gg-signal-return,
+.sm-modal:is([data-journey="entering"], [data-journey="detail"]) .gg-signal-return { animation-direction: alternate; }
+@keyframes gg-signal-travel { from { stroke-dashoffset: 100; } to { stroke-dashoffset: 0; } }
+.sm-star:is(:hover, :focus-visible) [data-motion-preset="echo-expand"] .gg-wave { animation: gg-echo-answer 1.5s ease-out infinite; }
+.sm-star:is(:hover, :focus-visible) .gg-echo-1 .gg-wave { animation-delay: .16s; }
+.sm-star:is(:hover, :focus-visible) .gg-echo-2 .gg-wave { animation-delay: .32s; }
+@keyframes gg-echo-answer { 0%, 100% { stroke-opacity: .5; } 28% { stroke-opacity: 1; } }
+.sm-star:is(:hover, :focus-visible) [data-motion-preset="shell-open"] .gg-core-group { animation: gg-protostar-breathe 1.9s ease-in-out infinite alternate; transform-box: view-box; transform-origin: 0 0; }
+@keyframes gg-protostar-breathe { from { transform: scale(1); } to { transform: scale(1.13); } }
+
+/* The flyout clones the exact SVG. Entry and exit use reversible transitions
+   for each authored layer, so Esc halfway through can retarget current poses. */
+.sm-modal:is([data-journey="entering"], [data-journey="detail"]) .gg-part { transform: var(--gg-open, none); }
+.sm-modal[data-journey="entering"] .gg-part { transition-duration: 1.03s; }
+@starting-style {
+  .sm-modal[data-journey="entering"] .gg-part { transform: var(--gg-hover, none); }
+}
+.sm-modal[data-journey="leaving"] .gg-part { transform: none; transition-duration: .6s; transition-delay: 0ms; }
+.sm-modal:is([data-journey="entering"], [data-journey="detail"]) .gg-guide { stroke-dashoffset: 0; opacity: .7; }
+.sm-modal[data-journey="leaving"] .gg-guide { stroke-dashoffset: 44; opacity: 0; transition-duration: .25s; }
+.sm-modal[data-journey="leaving"] .gg-signal { opacity: 0; animation: none; transition: opacity .18s; }
+.sm-modal .gg-line { stroke-width: .88; }
+.sm-modal .gg-line.gg-faint { stroke-width: .65; }
+.sm-modal .gg-line.gg-strong { stroke-width: 1.15; }
+.sm-modal .gg-line.gg-logo-frame { stroke-width: 1.6; }
+.sm-modal .gg-line.gg-logo-strokes { stroke-width: 1.15; }
+.sm-modal .gg-ribbon, .sm-modal .gg-shell-haze { stroke-width: 10; opacity: .065; }
+.sm-modal .gg-prism-fill { fill-opacity: .045; }
+
+/* Dormant shapes are a quiet arc, binary remnant or crystal, never controls. */
+.sm-empty > i.sm-empty-glyph { position: absolute; width: 38px; height: 38px; background: none; border-radius: 0; opacity: .48; color: #7589a7; }
+.sm-empty > i.sm-empty-glyph .sm-node-dormant { opacity: .75; }
+.sm-node-dormant .gg-line { stroke-width: .65; opacity: .65; }
+.sm-node-dormant .gg-core { fill: #9babc2; }
+.sm-node-dormant .gg-corona, .sm-node-dormant .gg-aura { opacity: 0; }
+.sm-empty:is(:hover, :focus-visible) > i.sm-empty-glyph { opacity: .72; }
+
+/* CSS pulse loops can be suspended together with the app frame loop. */
+.sm-root[data-page-hidden="true"] .gg-vector *,
+.sm-root[hidden] .gg-vector * { animation-play-state: paused !important; }
+.sm-root[data-reduced="true"] .gg-vector *,
+.sm-root[data-reduced="true"] .sm-node-visual { animation: none !important; transition: none !important; }
+@media (prefers-reduced-motion: reduce) {
+  .gg-vector *, .sm-node-visual { animation: none !important; transition: none !important; }
+}

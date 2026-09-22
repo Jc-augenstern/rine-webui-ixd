@@ -11,7 +11,7 @@
   top: 50%;
   transform: translateY(-44%);
   color: var(--theme-ink);
-  animation: identity-in 0.6s ease both;
+  /* Entrance opacity/translation share the Logo's application clock. */
 }
 .identity-topline {
   display: flex;
@@ -153,10 +153,17 @@
   animation: identity-scan 1.1s linear infinite;
 }
 [data-experience="login"] .auth-status,
+[data-experience="intro"] .auth-status,
+[data-experience="login-enter"] .auth-status,
 [data-experience="authenticating"] .auth-status,
 [data-experience="confirmed"] .auth-status {
   visibility: hidden;
 }
+.ixd-experience .access-text { visibility: hidden; }
+.ixd-experience[data-experience="preparing"] #stage { visibility: hidden; }
+.startup-preparation .boot-phrase-letter[hidden] { display: block; visibility: hidden; }
+.startup-preparation .preparation-access > .boot-phrase { display: inline-flex; animation: none; }
+.startup-preparation .preparation-access .boot-phrase-label { animation: none; }
 .ixd-experience .mobile-entry {
   display: none !important;
 }
@@ -172,7 +179,6 @@
   z-index: 7;
   background: #060912;
   color: #dbe5f6;
-  animation: galaxy-arrive 1.2s ease both;
 }
 .galaxy-canvas {
   position: absolute;
@@ -218,14 +224,6 @@
     transform: translateX(390%);
   }
 }
-@keyframes galaxy-arrive {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
 @media (max-width: 760px) {
   .identity-access {
     left: 24px;
@@ -251,6 +249,7 @@
     margin-top: 18px;
   }
   .ixd-experience[data-experience="login"] .boot-logo,
+  .ixd-experience[data-experience="login-enter"] .boot-logo,
   .ixd-experience[data-experience="authenticating"] .boot-logo,
   .ixd-experience[data-experience="confirmed"] .boot-logo {
     display: none;

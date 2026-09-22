@@ -92,6 +92,7 @@ try {
   await phase("authorized");
   await page.waitForTimeout(400);
   await shot("06-authorized");
+  await phase("handoff");
   await phase("welcome");
   await page.waitForTimeout(550);
   await shot("07-welcome");
@@ -278,7 +279,7 @@ try {
   check(
     "Full login phase order",
     success.includes(
-      "authenticating > confirmed > authorized > welcome > galaxy",
+      "authenticating > confirmed > authorized > handoff > welcome > bridge > galaxy",
     ),
   );
   check("No runtime errors", report.errors.length === 0);
