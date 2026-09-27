@@ -70,6 +70,29 @@
 .gg-ribbon, .gg-shell-haze { transition: stroke-width .6s, opacity .6s; }
 .gg-prism-fill { transition: fill-opacity .6s; }
 
+/* Primary sections share the announcement's quiet line, white core and sparse
+   energy language. Animation stays inside the fixed glyph, never its hitbox. */
+.sm-node-visual[data-primary-glyph] .gg-haze { transform: none; opacity: .55; background: radial-gradient(ellipse 28% 28% at 50% 50%, color-mix(in srgb, var(--star-color) 26%, transparent), transparent 92%); }
+.sm-node-visual[data-primary-glyph] .gg-core-group { animation: none; }
+.gg-primary-flow { fill: none; stroke: #d8e5ff; stroke-width: .95; stroke-linecap: round; stroke-dasharray: 4 96; stroke-dashoffset: 100; opacity: .46; animation: gg-primary-travel 5.6s linear infinite; animation-delay: var(--gg-energy-delay, 0s); transition: opacity .3s; }
+.gg-primary-pulse { animation: gg-primary-pulse 5.2s ease-in-out infinite; animation-delay: var(--gg-energy-delay, 0s); }
+.gg-line.gg-clock-tick { stroke-width: .85; opacity: .5; animation: gg-clock-calibrate 4.8s ease-in-out infinite; animation-delay: var(--gg-energy-delay, 0s); }
+.gg-primary-flow.gg-clock-sweep { stroke-dasharray: 10 90; animation-duration: 12s; }
+.gg-primary-flow.gg-learning-flow { animation-duration: 6.8s; }
+.gg-primary-flow.gg-exhibition-scan { stroke-dasharray: 7 93; animation-duration: 9s; }
+.gg-primary-flow.gg-core-orbit { opacity: .35; stroke-dasharray: 5 95; animation-duration: 15s; }
+.gg-primary-echo { fill: none; stroke: currentColor; stroke-width: .7; opacity: .32; transform-box: view-box; transform-origin: 0 0; animation: gg-gathering-echo 6s ease-out infinite; }
+.gg-primary-echo-late { animation-delay: -3s; }
+.gg-primary-core-system > .gg-core-group .gg-corona { animation: gg-core-breathe 5.8s ease-in-out infinite; }
+.sm-star:is(:hover, :focus-visible) .gg-primary-flow,
+.sm-modal:is([data-journey="entering"], [data-journey="detail"]) .gg-primary-flow { opacity: .85; }
+.sm-modal[data-journey="leaving"] .gg-primary-flow { opacity: .46; }
+@keyframes gg-primary-travel { from { stroke-dashoffset: 100; } to { stroke-dashoffset: 0; } }
+@keyframes gg-primary-pulse { 0%, 70%, 100% { opacity: .78; } 35% { opacity: 1; } }
+@keyframes gg-clock-calibrate { 0%, 26%, 100% { opacity: .42; } 10% { opacity: .95; } }
+@keyframes gg-gathering-echo { 0% { transform: scale(.72); opacity: .04; } 18% { opacity: .42; } 100% { transform: scale(1.45); opacity: 0; } }
+@keyframes gg-core-breathe { 0%, 100% { opacity: .22; } 50% { opacity: .42; } }
+
 /* Dormant shapes are a quiet arc, binary remnant or crystal, never controls. */
 .sm-empty > i.sm-empty-glyph { position: absolute; width: 38px; height: 38px; background: none; border-radius: 0; opacity: .48; color: #7589a7; }
 .sm-empty > i.sm-empty-glyph .sm-node-dormant { opacity: .75; }

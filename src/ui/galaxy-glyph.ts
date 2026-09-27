@@ -153,6 +153,100 @@ function beacon(random: Random) {
     layer("gg-beacon-guide", path("M0 0 18-17 39-37", "gg-line gg-beacon-path", 'stroke-dasharray="3 5"') + signal("M39-37 18-17 0 0", -.2) + path("M27-38 39-37 40-25", "gg-line") + core(23, -22, 1.3) + core(39, -37, 1.6), "translate(2px,-2px)", "translate(8px,-8px)", 50) + core(0, 0, 2.7);
 }
 
+// Primary section artwork is independent of the direction presets. Its semantic
+// key stays local to this renderer; published visual identities keep their seed.
+function energy(d: string, delay = 0, className = "") {
+  return path(d, `gg-primary-flow ${className}`, `pathLength="100" style="--gg-energy-delay:${delay}s"`);
+}
+
+function primaryPulse(body: string, delay = 0) {
+  return `<g class="gg-primary-pulse" style="--gg-energy-delay:${delay}s">${body}</g>`;
+}
+
+function timeBeacon(random: Random) {
+  const ticks = Array.from({ length: 24 }, (_, index) => {
+    const angle = index * Math.PI / 12 - Math.PI / 2, inner = index % 3 ? 41 : 38;
+    return path(`M${n(Math.cos(angle) * inner)} ${n(Math.sin(angle) * inner)}L${n(Math.cos(angle) * 46)} ${n(Math.sin(angle) * 46)}`,
+      "gg-line gg-clock-tick", `style="--gg-energy-delay:${-index * .2}s"`);
+  }).join("");
+  const orbit = "M0-32A32 32 0 1 1-28-15";
+  return layer("gg-clock-dial", ticks + path(orbit, "gg-line gg-ring") + energy(orbit, 0, "gg-clock-sweep"), "scale(1.025)", "scale(1.1)") +
+    layer("gg-clock-beacon", path("M0 19V0L16-20M-6 19H6", "gg-line gg-strong") + path("M-17-12A21 21 0 0 1 9-19", "gg-line gg-faint") +
+      primaryPulse(core(0, 0, 3.3)) + core(16, -20, 1.5), "scale(1.02)", "scale(1.08)", 35) +
+    particles(random, 10, t => { const a = t * Math.PI * 2; return [Math.cos(a) * 50, Math.sin(a) * 50]; }, 2);
+}
+
+function collaborationModules(random: Random) {
+  const modules = [
+    { x: -30, y: -23, route: "M0 0H-16V-23H-30", dx: -1, dy: -1 },
+    { x: 30, y: -18, route: "M0 0H17V-18H30", dx: 1, dy: -1 },
+    { x: 24, y: 29, route: "M0 0V17H24V29", dx: 1, dy: 1 },
+  ];
+  const cluster = modules.map((module, index) => {
+    const { x, y, route, dx, dy } = module;
+    const outline = `M${x - 10} ${y - 8}h14l6 6v10h-20Z M${x - 5} ${y + 3}h10`;
+    return path(route, "gg-line gg-faint") + energy(route, -index * 1.1) +
+      layer("gg-collaboration-module", path(outline, "gg-line gg-facet") + primaryPulse(core(x, y - 2, 1.8), -index * 1.1),
+        `translate(${dx}px,${dy}px)`, `translate(${dx * 5}px,${dy * 5}px)`, index * 35);
+  }).join("");
+  return cluster + path("M-10-6 0-12 10-6V6L0 12-10 6Z", "gg-line gg-strong") + primaryPulse(core(0, 0, 3), -.6) +
+    path("M-37 22H-23M-30 15V29M-19 34H-9", "gg-line gg-faint") +
+    particles(random, 9, t => [t * 66 - 33, 40 - t * 6], 3);
+}
+
+function gatheringField(random: Random) {
+  const field = "M-37 0C-37-23 37-23 37 0C37 23-37 23-37 0Z";
+  const satellites: Point[] = [[-34, -7], [25, -18], [27, 19], [-20, 25]];
+  return layer("gg-gathering-field", path(field, "gg-line gg-ring") + energy(field, -.8) +
+    '<circle class="gg-primary-echo" r="26"/><circle class="gg-primary-echo gg-primary-echo-late" r="26"/>', "scale(1.04)", "scale(1.13)") +
+    satellites.map(([x, y], index) => layer("gg-gathering-node", primaryPulse(core(x, y, 2.1), -index * .8) +
+      path(`M${n(x * .47)} ${n(y * .47)}L${n(x * .75)} ${n(y * .75)}`, "gg-line gg-faint"),
+      `translate(${n(-x * .025)}px,${n(-y * .025)}px)`, `translate(${n(x * .07)}px,${n(y * .07)}px)`, index * 30)).join("") +
+    primaryPulse(core(0, 0, 3.4), -.4) + particles(random, 12, t => { const a = t * Math.PI * 2; return [Math.cos(a) * 43, Math.sin(a) * 31]; }, 3);
+}
+
+function knowledgeRoute(random: Random) {
+  const ascent = "M-36 31H-24V11H-12V-10H12V-31H36";
+  const levels: Point[] = [[-36, 31], [-12, 11], [12, -10], [36, -31]];
+  return layer("gg-learning-route", path(ascent, "gg-line gg-strong") + energy(ascent, 0, "gg-learning-flow") +
+    path("M-12 11H-34V-9M12-10H34V11", "gg-line gg-faint") +
+    energy("M-34-9V11H-12", -1.9) + energy("M12-10H34V11", -3.2) +
+    levels.map(([x, y], index) => primaryPulse(path(`M${x} ${y - 4}l4 4-4 4-4-4Z`, "gg-line gg-facet") + core(x, y, 1.55), -index * .85)).join("") +
+    core(-34, -9, 1.35) + core(34, 11, 1.35), "translate(0,-1px)", "scale(1.1)") +
+    path("M-42 40H-23M-18 22H1M6 1H25M28-41H44", "gg-line gg-faint") +
+    particles(random, 8, t => [t * 62 - 31, 34 - t * 61], 7);
+}
+
+function achievementDisplay(random: Random) {
+  const frame = "M-40-15V-29H-24M24-29H40V-15M40 14V28H24M-24 28H-40V14";
+  const record = "M-44 31Q0 53 44 31";
+  return layer("gg-exhibition-frame", path(frame, "gg-line gg-strong") + path("M-30-20H30V20H-30Z", "gg-line gg-faint") +
+    energy("M-40 14V-29H40V28H-24", -.8, "gg-exhibition-scan"), "scale(1.035)", "scale(1.13)") +
+    layer("gg-exhibition-record", path(record, "gg-line gg-ring") + energy(record, -2.1) + core(0, 42, 1.2), "translate(0,1px)", "translate(0,5px)", 45) +
+    path("M0-16 14-7V9L0 18-14 9V-7Z M-14-7 0 1 14-7M0 1V18", "gg-line gg-facet") +
+    primaryPulse(core(0, 0, 2.7)) + particles(random, 8, t => [t * 56 - 28, 36 + Math.sin(t * Math.PI) * 5], 2);
+}
+
+function coreSystem(random: Random) {
+  const orbit = "M0-49A49 49 0 1 1-42-25";
+  const gateways = Array.from({ length: 6 }, (_, index) => {
+    const angle = index * Math.PI / 3 - Math.PI / 2, x = Math.cos(angle) * 49, y = Math.sin(angle) * 49;
+    return primaryPulse(core(Number(n(x)), Number(n(y)), 1.55), -index * .8);
+  }).join("");
+  // The existing IXD paths and their authored poses stay intact inside the system.
+  return layer("gg-core-system", path(orbit, "gg-line gg-faint") + energy(orbit, -1.5, "gg-core-orbit") + gateways,
+    "scale(1.02)", "scale(1.1)", 35) + `<g class="gg-primary-core-system">${ixdCore(random)}</g>`;
+}
+
+const primaryStructures = {
+  competitions: timeBeacon, projects: collaborationModules, events: gatheringField,
+  learning: knowledgeRoute, works: achievementDisplay, core: coreSystem,
+};
+const primaryDefaults: Record<keyof typeof primaryStructures, readonly GalaxyVisualPreset[]> = {
+  competitions: ["ascent-comet"], projects: ["protostar-shell"], events: ["exchange-stars"],
+  learning: ["neural-cluster", "lattice-satellites"], works: ["prism-shards"], core: ["ixd-core"],
+};
+
 const structures: Record<Exclude<GalaxyVisualPreset, `dormant-${string}`>, (random: Random) => string> = {
   "neural-cluster": neural, "binary-mechanism": mechanism, "echo-nebula": echoes,
   "asymmetric-arms": arms, "spatial-gate": gate, "lattice-satellites": lattice,
@@ -166,25 +260,30 @@ const dormantStructures = {
   "dormant-shard": path("M-7-22 17-2 5 20-13 4Z M-7-22 2-1 5 20M2-1 17-2", "gg-line") + core(2, -1, .9),
 };
 
-function markup(identity: StarVisualIdentity, dormant: boolean) {
+function markup(identity: StarVisualIdentity, dormant: boolean, sectionId?: string) {
+  const section = !dormant && sectionId && Object.prototype.hasOwnProperty.call(primaryStructures, sectionId)
+    ? sectionId as keyof typeof primaryStructures : undefined;
+  // Keep explicit editorial preset changes functional. Only the section's
+  // original defaults receive the new semantic artwork.
+  const primary = section && primaryDefaults[section].includes(identity.visualPreset) ? section : undefined;
   const body = dormant
     ? dormantStructures[identity.visualPreset as keyof typeof dormantStructures] ?? dormantStructures["dormant-arc"]
-    : structures[identity.visualPreset as keyof typeof structures](seeded(identity.visualSeed));
+    : (primary ? primaryStructures[primary] : structures[identity.visualPreset as keyof typeof structures])(seeded(identity.visualSeed));
   // No SVG ids, masks or URL references: cloning navigation markup for flight
   // keeps exact particle coordinates without collisions between visible copies.
-  return `<span class="sm-node-visual${dormant ? " sm-node-dormant" : ""}" data-preset="${identity.visualPreset}" data-visual-preset="${identity.visualPreset}" data-motion-preset="${identity.motionPreset}" data-visual-seed="${identity.visualSeed}">
+  return `<span class="sm-node-visual${dormant ? " sm-node-dormant" : ""}" data-preset="${identity.visualPreset}" data-visual-preset="${identity.visualPreset}" data-motion-preset="${identity.motionPreset}" data-visual-seed="${identity.visualSeed}"${primary ? ` data-primary-glyph="${primary}"` : ""}>
     ${dormant ? "" : '<span class="sm-galaxy-haze gg-haze"></span>'}
     <svg class="sm-galaxy-vector gg-vector" viewBox="-64 -64 128 128" aria-hidden="true" focusable="false">${body}${dormant ? "" : '<g class="sm-galaxy-survey gg-hover-survey"><path class="gg-line gg-faint" d="M-53-25V-33H-45M45-33H53V-25M53 25V33H45M-45 33H-53V25"/></g>'}</svg>
   </span>`;
 }
 
 /** Stable identity is reused without re-seeding at navigation, flight and detail. */
-export function galaxyGlyph(node: StarVisualIdentity | number = 1): string {
+export function galaxyGlyph(node: StarVisualIdentity | number = 1, sectionId?: string): string {
   // Numeric calls remain supported for the existing non-node growth trajectory.
   const identity: StarVisualIdentity = typeof node === "number"
     ? { visualPreset: "open-beacon", motionPreset: "beacon-guide", visualSeed: node }
     : node;
-  return markup(identity, identity.motionPreset === "dormant");
+  return markup(identity, identity.motionPreset === "dormant", sectionId);
 }
 
 /** The caller retains enabled=false and the existing non-navigation semantics. */

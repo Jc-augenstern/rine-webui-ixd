@@ -3,6 +3,8 @@ import { escapeHtml as esc } from '../html';
 import { type StarMapUI } from '../ui/star-map-ui';
 import { platformApi as api, ApiError, errorMessage } from './api';
 import './platform.css';
+import { renderCompetitionFilters, renderCompetitionRow, renderCompetitionRuler, registrationTimeline, refreshCompetitionRulers } from './competition-view';
+import './competition-view.css';
 
 const directions = { ai: 'AI 与智能系统', robotics: '具身智能与机器人', interaction: '新媒体与交互设计', visual: '文创与视觉设计', xr: 'XR 与交互娱乐', hardware: '智能硬件' };
 const labels: Record<string, string> = { ...contentLabels, core: '社团介绍', learning: '学习中心', account: '个人中心', favorites: '我的收藏', applications: '项目申请', registrations: '活动报名', intents: '参赛意向', notifications: '站内通知', profile: '基础资料', security: '账户安全', projects: '参与项目', works: '我的投稿' };
@@ -13,18 +15,6 @@ const fmt = (value: unknown, zone = 'Asia/Shanghai') => value ? new Intl.DateTim
 const deadline = (value: unknown) => {
   const date = value as DateValue | null;
   return !date || date.precision === 'unknown' ? '待公布 / 待核实' : date.precision === 'date' ? `${e(date.date)}（日期精度 · ${e(date.timeZone)}）` : `${e(fmt(date.at, date.timeZone))}（${e(date.timeZone)}）`;
-};
-const registrationPhase = (details: ContentPayload['details']) => {
-  const compare = (raw: unknown) => {
-    const value = raw as DateValue | null;
-    if (!value || value.precision === 'unknown') return null;
-    if (value.precision === 'datetime') return Date.now() - new Date(value.at!).getTime();
-    const parts = new Intl.DateTimeFormat('en', { timeZone: value.timeZone, year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date());
-    const part = (type: string) => parts.find(item => item.type === type)!.value;
-    return `${part('year')}-${part('month')}-${part('day')}`.localeCompare(value.date!);
-  };
-  const start = compare(details.registrationStart), end = compare(details.registrationEnd);
-  return start !== null && start < 0 ? '未开始' : end !== null && end > 0 ? '已截止' : start === null && end === null ? '待公布 / 待核实' : '报名中';
 };
 const external = (url: unknown, label: string) => typeof url === 'string' && /^https?:\/\//i.test(url) ? `<a href="${e(url)}" target="_blank" rel="noopener noreferrer">${e(label)} ↗</a>` : '';
 const nav = (path: string, label: string) => `<a href="#/${e(path)}" data-pf-link>${e(label)}</a>`;
@@ -93,7 +83,7 @@ export class PlatformUI {
     history.pushState(null, '', this.map.currentLevel === 'directions' ? '#/directions' : '#/');
     this.lastRoute = location.hash;
   }
-  mainLevel() { history.pushState(null, '', '#/'); }
+  mainLevel() { if (this.navigation && this.route().parts[0] === 'core') return; void this.navigate('core'); }
   private route() {
     let value = location.hash.replace(/^#\/?/, '');
     if (value.startsWith('star/')) {
@@ -106,13 +96,16 @@ export class PlatformUI {
   private routeChanged = () => {
     if (!this.active || this.lastRoute === location.hash) return;
     if (!this.confirmClose()) { history.pushState(null, '', this.lastRoute); return; }
+    if (!this.route().parts.length && this.map.currentLevel === 'directions') history.replaceState(null, '', '#/core');
+    if (this.route().parts[0] !== 'directions') { this.map.cancelCoreEntry(); this.abort?.abort(); }
     this.lastRoute = location.hash; void this.showRoute(false);
   };
   confirmClose() { if (this.dirty && !confirm('有尚未保存的修改。确定离开？')) return false; this.dirty = false; return true; }
   private beforeUnload = (event: BeforeUnloadEvent) => { if (this.dirty) { event.preventDefault(); event.returnValue = ''; } };
   private input = (event: Event) => { if ((event.target as Element).closest('[data-pf-form="work"],[data-pf-form="profile"]')) this.dirty = true; };
   private refresh = () => {
-    if (!this.active || document.hidden || this.dirty || this.map.element.querySelector('form')?.contains(document.activeElement)) return;
+    if (this.active && !document.hidden) refreshCompetitionRulers(this.map.detailHost);
+    if (!this.active || this.navigation || document.hidden || this.dirty || this.map.element.querySelector('form')?.contains(document.activeElement)) return;
     void this.loadSettings(); if (this.map.activeStar) void this.render(true);
   };
   private async loadSettings() {
@@ -122,30 +115,65 @@ export class PlatformUI {
   async navigate(path: string, replace = false) {
     if (this.dirty && !confirm('有尚未保存的修改。确定离开？')) return;
     this.dirty = false;
+    if (!path && this.map.currentLevel === 'directions') path = 'core';
+    if (!path.startsWith('directions')) { this.map.cancelCoreEntry(); this.abort?.abort(); }
     history[replace ? 'replaceState' : 'pushState'](null, '', `#/${path}`);
     this.lastRoute = location.hash;
     await this.showRoute(false);
   }
   private showRoute(refresh: boolean): Promise<void> {
-    this.routeWork = this.routeWork.catch(() => {}).then(() => this.displayRoute(refresh));
+    const route = location.hash;
+    this.routeWork = this.routeWork.catch(() => {}).then(() => this.displayRoute(refresh, route));
     return this.routeWork;
   }
-  private async displayRoute(refresh: boolean) {
-    if (!this.active) return;
+  private async displayRoute(refresh: boolean, route: string) {
+    const current = () => this.active && location.hash === route;
+    if (!current()) return;
     const { parts } = this.route();
     if (parts[0]?.startsWith('auth')) return;
     this.navigation = true;
     try {
+      if (parts[0] === 'directions' && this.map.currentLevel !== 'directions') {
+        const hasCoreContent = this.map.activeStar === 'core' && Boolean(this.map.detailHost.querySelector('.pf-content'));
+        if (!(await this.map.navigateStar('core')) || !current()) return;
+        this.map.prepareCoreEntry();
+        if (!hasCoreContent) {
+          const content = await this.coreForJourney();
+          if (!current()) return;
+          this.map.detailHost.innerHTML = content;
+        }
+        if (!(await this.map.enterDirections())) {
+          if (current()) void this.navigate('core', true);
+          return;
+        }
+        if (!current()) return;
+      } else if (parts[0] !== 'directions' && this.map.currentLevel === 'directions') {
+        if (this.map.activeStar) { this.map.closeDetail(); await this.waitClosed(); }
+        if (!current()) return;
+        const content = await this.coreForJourney();
+        if (!current()) return;
+        if (!(await this.map.leaveDirections(content))) return;
+        if (!current()) return;
+        if (parts[0] === 'core') return;
+      }
       if (!parts.length || parts[0] === 'directions' && !parts[1]) {
         if (this.map.activeStar) { this.map.closeDetail(); await this.waitClosed(); }
-        this.map.setLevel(parts[0] === 'directions' ? 'directions' : 'main'); return;
+        if (current()) this.map.setLevel(parts[0] === 'directions' ? 'directions' : 'main'); return;
       }
       const star = parts[0] === 'directions' ? parts[1] : ['resources','learning-paths'].includes(parts[0]) ? 'learning' : parts[0] === 'pages' ? 'core' : parts[0];
       if (!(await this.map.navigateStar(star))) {
+        if (!current()) return;
         await this.map.navigateStar('core'); this.map.detailHost.innerHTML = this.heading('无法打开此栏目') + '<p class="pf-error">栏目不存在或已停用，请从星图选择其他栏目。</p>'; return;
       }
+      if (!current()) return;
       await this.render(refresh);
     } finally { this.navigation = false; }
+  }
+  private async coreForJourney() {
+    this.abort?.abort(); const controller = this.abort = new AbortController(); ++this.generation;
+    this.content = undefined;
+    try { return `<div class="pf-content">${await this.core(controller.signal)}</div>`; }
+    catch (error) { return `<div class="pf-content">${this.heading('社团介绍 / IXD CORE')}<p class="pf-error">${e(errorMessage(error))}</p>${button('refresh','重新读取')}${button('directions','进入方向二级星图 →')}</div>`; }
   }
   private waitClosed() { return new Promise<void>(resolve => { const wait = () => this.map.activeStar ? requestAnimationFrame(wait) : resolve(); wait(); }); }
   private heading(title: string, subtitle = 'IXD / COMMUNITY PLATFORM') { return `<div class="pf-top"><p class="sm-detail-code">${e(subtitle)}</p><h2 id="sm-detail-title">${e(title)}</h2><div class="pf-feedback" role="status" aria-live="polite"></div></div>`; }
@@ -195,14 +223,14 @@ export class PlatformUI {
     const params = new URLSearchParams([...query].filter(([key,value]) => allowed.has(key) && value)); params.set('pageSize','12');
     const result = await api.request<ContentDTO[]>(`/${kind}?${params}`, { signal });
     const learning = kind === 'resources' || kind === 'learning-paths';
-    const filters = `<form class="pf-filters" data-pf-form="filter">${field('q','搜索',query.get('q') ?? '', 'search', 'maxlength="200"')}${directionSelect(query.get('direction') ?? '')}${learning ? `<label>难度${choices('difficulty',['','BEGINNER','INTERMEDIATE','ADVANCED'],query.get('difficulty') ?? '',{ '':'全部难度',...statusLabels })}</label>` : ''}${kind === 'competitions' ? field('year','年份',query.get('year') ?? '', 'number','min="2000" max="2200"') + `<label>报名状态${choices('phase',['','upcoming','open','closed','unknown'],query.get('phase') ?? '',{'':'全部状态',upcoming:'未开始',open:'报名中',closed:'已截止',unknown:'待核实'})}</label>` : ''}<label>排序${choices('sort',['newest','oldest','title','order',...(kind === 'competitions' ? ['deadline'] : [])],query.get('sort') ?? 'newest',{newest:'最新发布',oldest:'最早发布',title:'标题',order:'编辑排序',deadline:'截止时间'})}</label><button type="submit">搜索 / 筛选</button></form>`;
+    const filters = kind === 'competitions' ? renderCompetitionFilters(query, directions) : `<form class="pf-filters" data-pf-form="filter">${field('q','搜索',query.get('q') ?? '', 'search', 'maxlength="200"')}${directionSelect(query.get('direction') ?? '')}${learning ? `<label>难度${choices('difficulty',['','BEGINNER','INTERMEDIATE','ADVANCED'],query.get('difficulty') ?? '',{ '':'全部难度',...statusLabels })}</label>` : ''}<label>排序${choices('sort',['newest','oldest','title','order',],query.get('sort') ?? 'newest',{newest:'最新发布',oldest:'最早发布',title:'标题',order:'编辑排序',deadline:'截止时间'})}</label><button type="submit">搜索 / 筛选</button></form>`;
     const descriptionKey = learning ? 'learning' : kind;
     return this.heading(contentLabels[kind]) + (this.settings ? `<p>${e(this.settings.sectionDescriptions[descriptionKey as keyof SiteSettings['sectionDescriptions']] ?? '')}</p>` : '') + (learning ? `<nav class="pf-tabs">${nav('resources','学习资源')}${nav('learning-paths','学习路线')}</nav>` : '') + filters +
-      `<div class="pf-list">${result.data.map(item => `<article class="pf-row">${item.payload.coverId ? `<img class="pf-cover-thumb" src="/api/v1/media/${enc(item.payload.coverId)}/download" alt="" loading="lazy"/>` : ''}<div><div class="pf-meta">${item.payload.pinned ? '<b>置顶</b>' : ''}${item.payload.importance === 'important' ? '<b>重要</b>' : ''}${kind === 'announcements' && api.session?.user ? `<span>${item.read ? '已读' : '未读'}</span>` : ''}<time>${e(fmt(item.publishedAt))}</time></div><h3>${nav(`${kind}/${item.id}`,item.payload.title)}</h3><p>${e(item.payload.summary)}</p>${kind === 'competitions' ? `<small>官方报名：${registrationPhase(item.payload.details)} · 截止：${deadline(item.payload.details.registrationEnd)}</small>` : ''}</div></article>`).join('') || '<p class="pf-empty">暂无符合条件的已发布内容。</p>'}</div>` + this.pagination(result.meta);
+      `<div class="pf-list">${result.data.map(item => kind === 'competitions' ? renderCompetitionRow(item, fmt(item.publishedAt)) : `<article class="pf-row">${item.payload.coverId ? `<img class="pf-cover-thumb" src="/api/v1/media/${enc(item.payload.coverId)}/download" alt="" loading="lazy"/>` : ''}<div><div class="pf-meta">${item.payload.pinned ? '<b>置顶</b>' : ''}${item.payload.importance === 'important' ? '<b>重要</b>' : ''}${kind === 'announcements' && api.session?.user ? `<span>${item.read ? '已读' : '未读'}</span>` : ''}<time>${e(fmt(item.publishedAt))}</time></div><h3>${nav(`${kind}/${item.id}`,item.payload.title)}</h3><p>${e(item.payload.summary)}</p></div></article>`).join('') || '<p class="pf-empty">暂无符合条件的已发布内容。</p>'}</div>` + this.pagination(result.meta);
   }
   private async core(signal: AbortSignal) {
     const { data } = await api.request<ContentDTO[]>('/pages?pageSize=100&sort=order', { signal });
-    return this.heading('社团介绍 / IXD CORE') + `<p>认识 IXD，选择你的探索方向。</p>${button('directions','进入六方向二级星图 →')}<nav class="pf-tabs">${directionKeys.map(key => nav(`directions/${key}`,directions[key])).join('')}</nav>` + data.map(item => `<section class="pf-section"><h3>${e(item.payload.title)}</h3><p>${e(item.payload.summary)}</p><div class="pf-markdown">${item.bodyHtml}</div>${attachments(item.payload.attachmentIds)}</section>`).join('') + (!data.length ? '<p class="pf-empty">社团介绍尚未发布。</p>' : '') + (this.settings?.contact ? `<section class="pf-section"><h3>对外联系</h3><p class="pf-pre">${e(this.settings.contact)}</p></section>` : '');
+    return this.heading('社团介绍 / IXD CORE') + `<p>认识 IXD，选择你的探索方向。</p>${button('directions','进入方向二级星图 →')}` + data.map(item => `<section class="pf-section"><h3>${e(item.payload.title)}</h3><p>${e(item.payload.summary)}</p><div class="pf-markdown">${item.bodyHtml}</div>${attachments(item.payload.attachmentIds)}</section>`).join('') + (!data.length ? '<p class="pf-empty">社团介绍尚未发布。</p>' : '') + (this.settings?.contact ? `<section class="pf-section"><h3>对外联系</h3><p class="pf-pre">${e(this.settings.contact)}</p></section>` : '');
   }
   private async detail(item: ContentDTO, signal: AbortSignal) {
     this.content = item; const p = item.payload, d = p.details;
@@ -219,7 +247,7 @@ export class PlatformUI {
     const favoriteRecord = this.favorites.find(row => row.content.id === item.id), favorite = Boolean(favoriteRecord);
     const reminderHours = favoriteRecord?.reminderHours ?? [24];
     let extra = '';
-    if (item.kind === 'competitions') extra = `<dl class="pf-facts"><dt>官方报名状态</dt><dd>${registrationPhase(d)}</dd><dt>届次 / 年份</dt><dd>${e(d.edition)} ${e(d.year)}</dd><dt>主办信息</dt><dd>${e(d.organizer)}</dd><dt>参赛条件</dt><dd>${e(d.eligibility)}</dd><dt>赛道</dt><dd>${e((d.tracks as string[]).join('、'))}</dd>${[['registrationStart','官方报名开始'],['registrationEnd','官方报名截止'],['internalDeadline','学校/社团内部材料截止'],['submissionDeadline','作品提交截止']].map(([key,label]) => `<dt>${label}</dt><dd>${deadline(d[key])}</dd>`).join('')}<dt>最后核实</dt><dd>${e(fmt(d.lastVerifiedAt))}</dd></dl><div class="pf-actions">${external(d.officialUrl,'官方网站')}${external(d.registrationUrl,'前往官网正式报名')}${external(d.sourceUrl,'信息来源')}${button('intent',this.actionState.intent ? '撤回 IXD 参赛意向' : '提交 IXD 参赛意向')}</div><p class="pf-note">收藏或内部参赛意向不等于完成赛事官网报名。</p>`;
+    if (item.kind === 'competitions') extra = renderCompetitionRuler(d, { variant: 'detail' }) + `<dl class="pf-facts"><dt>官方报名状态</dt><dd>${registrationTimeline(d).status}</dd><dt>届次 / 年份</dt><dd>${e(d.edition)} ${e(d.year)}</dd><dt>主办信息</dt><dd>${e(d.organizer)}</dd><dt>参赛条件</dt><dd>${e(d.eligibility)}</dd><dt>赛道</dt><dd>${e((d.tracks as string[]).join('、'))}</dd>${[['registrationStart','官方报名开始'],['registrationEnd','官方报名截止'],['internalDeadline','学校/社团内部材料截止'],['submissionDeadline','作品提交截止']].map(([key,label]) => `<dt>${label}</dt><dd>${deadline(d[key])}</dd>`).join('')}<dt>最后核实</dt><dd>${e(fmt(d.lastVerifiedAt))}</dd></dl><div class="pf-actions">${external(d.officialUrl,'官方网站')}${external(d.registrationUrl,'前往官网正式报名')}${external(d.sourceUrl,'信息来源')}${button('intent',this.actionState.intent ? '撤回 IXD 参赛意向' : '提交 IXD 参赛意向')}</div><p class="pf-note">收藏或内部参赛意向不等于完成赛事官网报名。</p>`;
     if (item.kind === 'projects') {
       const positions = (d.positions as Position[]).filter(position => position.enabled);
       extra = `<dl class="pf-facts"><dt>负责人</dt><dd>${e(d.leaderName)}</dd><dt>阶段</dt><dd>${e(statusLabels[String(d.stage)] ?? d.stage)}</dd><dt>申请截止</dt><dd>${e(fmt(d.applicationDeadline))}</dd></dl>${external(d.showcaseUrl,'成果展示')}<section class="pf-section"><h3>招募岗位</h3>${positions.map(position => `<p><b>${e(position.title)}</b> · 名额 ${position.capacity}<br>${e(position.description)}</p>`).join('') || '<p>暂无开放岗位。</p>'}${d.recruiting && positions.length ? this.actionState.applied ? `${nav('account/applications','查看我的申请与处理结果')}` : `<form data-pf-form="apply"><label>选择岗位<select aria-label="选择岗位" name="positionId">${positions.map(position => `<option value="${e(position.id)}">${e(position.title)}</option>`).join('')}</select></label>${textarea('motivation','意向说明（至少 10 字）','','required minlength="10" maxlength="3000"')}${field('portfolioUrl','作品链接（可选）','','url','maxlength="2000"')}<button type="submit">提交申请</button></form>` : '<p>当前未开放招募。</p>'}</section>`;
@@ -314,7 +342,7 @@ export class PlatformUI {
     const action = control.dataset.pf!, id = control.dataset.id;
     if (action === 'login') { this.options.login(); return; }
     if (action === 'refresh') { await this.render(false); return; }
-    if (action === 'directions') { await this.navigate('directions'); return; }
+    if (action === 'directions') { control.disabled = true; try { await this.navigate('directions'); } finally { control.disabled = false; } return; }
     if (action === 'page') { const {parts,query} = this.route(); query.set('page',control.dataset.page!); await this.navigate(`${parts.join('/')}?${query}`); return; }
     if (action === 'copy') { try { await navigator.clipboard.writeText(location.href); this.feedback('链接已复制。'); } catch { this.feedback('复制未获浏览器许可，可直接复制地址栏链接。',true); } return; }
     if (!this.requireUser()) return;

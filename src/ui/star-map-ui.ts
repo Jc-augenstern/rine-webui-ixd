@@ -4,6 +4,8 @@ import { contentSource, growthSteps, type ClubContent } from "../data/club-conte
 import { constellationLinks, starMap, type StarMapNode, type StarPosition } from "../data/star-map";
 import "./star-map.css";
 import { galaxyGlyph, dormantGlyph, surveyMarkup } from "./galaxy-glyph";
+import { coreSystemLayout, coreSystemMarkup, smoothRange } from './core-system';
+import './core-system.css';
 
 export interface StarMapUIOptions {
   onFocus: (position: StarPosition | null) => void;
@@ -55,6 +57,10 @@ export class StarMapUI {
   private activeGlyph: HTMLElement | null = null;
   private pointer = { x: 0, y: 0, targetX: 0, targetY: 0 };
   private level: 'main' | 'directions' = 'main';
+  private coreJourney: { progress: number; target: 0 | 1; resolve: (entered: boolean) => void } | null = null;
+  private preparingCoreEntry = false;
+  private coreScroll = 0;
+  private mainScroll = 0;
 
   constructor(host: HTMLElement, options: StarMapUIOptions) {
     this.options = options;
@@ -70,9 +76,10 @@ export class StarMapUI {
           <div class="sm-system-brand"><span class="sm-mark" aria-hidden="true">${ixdMark("star-map-mark")}</span><span>IXD <b>ANALYSIS OS</b></span></div>
           <p class="sm-system-state"><i></i>星图已连接 <span> / SYSTEM ONLINE</span></p>
         </header>
-        <button class="sm-level-back" type="button" data-action="main-level" hidden>← 返回一级星图</button>
+        <button class="sm-level-back" type="button" data-action="main-level" hidden>← 返回 IXD CORE</button>
         <nav class="sm-direct" aria-label="栏目直达"><button data-star-direct="announcements">公告</button><button data-star-direct="competitions">赛事</button><button data-star-direct="projects">项目</button><button data-star-direct="events">活动</button><button data-star-direct="learning">学习</button><button data-star-direct="works">作品</button><button data-star-direct="core">社团</button><button data-star-direct="account">个人中心</button></nav>
         <div class="sm-field" role="group" aria-label="星图导航，点击星星探索；方向键切换星星">
+          ${coreSystemMarkup}
           ${this.linesMarkup()}
           <div class="sm-intro">
             <p class="sm-kicker">IXD STAR MAP <span> / 001</span></p>
@@ -108,6 +115,7 @@ export class StarMapUI {
           <footer class="sm-terminal-bottom"><span>IXD / KNOWLEDGE NETWORK</span><span>ESC 返回</span></footer>
         </article>
       </section>
+      <button class="sm-core-cancel" type="button" data-action="core-back" hidden>← 返回 IXD CORE</button>
       <div class="sm-announcer" role="status" aria-live="polite" aria-atomic="true"></div>`;
     host.append(this.element);
     this.home = this.element.querySelector(".sm-home")!;
@@ -152,7 +160,13 @@ export class StarMapUI {
 
   hide() {
     this.visible = false;
+    this.preparingCoreEntry = false;
+    const journey = this.coreJourney;
+    this.coreJourney = null;
+    this.clearCoreJourneyStyles();
     this.closeDetail(false);
+    this.setLevel('main');
+    journey?.resolve(false);
     this.element.classList.remove("is-visible");
     this.element.hidden = true;
     this.element.inert = false;
@@ -187,6 +201,120 @@ export class StarMapUI {
   get activeStar() { return this.modal.dataset.activeStar ?? null; }
   get detailHost() { return this.element.querySelector<HTMLElement>('.sm-detail-scroll')!; }
   get currentLevel() { return this.level; }
+  get inCoreJourney() { return this.coreJourney !== null; }
+  prepareCoreEntry() { this.preparingCoreEntry = true; }
+
+  /** The original detail glyph grows through the view before the inner field unfolds. */
+  async enterDirections() {
+    if (!this.preparingCoreEntry || this.coreJourney || !this.visible || this.activeStar !== 'core') return false;
+    await new Promise<void>(resolve => {
+      const wait = () => !this.visible || !this.flight ? resolve() : requestAnimationFrame(wait);
+      wait();
+    });
+    if (!this.preparingCoreEntry || !this.visible || this.activeStar !== 'core' || !this.modalOpen) return false;
+    this.preparingCoreEntry = false;
+    this.coreScroll = this.detailHost.scrollTop;
+    this.mainScroll = this.element.scrollTop;
+    this.setLevel('directions');
+    return this.startCoreJourney(0, 1);
+  }
+
+  /** Caller loads fresh CORE content before returning, so no private page is cached. */
+  leaveDirections(content: string) {
+    if (this.coreJourney || !this.visible || !this.modal.hidden || this.level !== 'directions') return Promise.resolve(false);
+    this.setLevel('main');
+    if (!this.openStar('core', true)) { this.setLevel('directions'); return Promise.resolve(false); }
+    this.flight = null;
+    this.detailHost.innerHTML = content;
+    this.detailHost.scrollTop = this.coreScroll;
+    this.setLevel('directions');
+    return this.startCoreJourney(1, 0).then(() => this.activeStar === 'core' && this.level === 'main');
+  }
+
+  cancelCoreEntry() {
+    this.preparingCoreEntry = false;
+    if (!this.coreJourney || this.coreJourney.target === 0) return;
+    this.coreJourney.target = 0;
+    this.element.dataset.coreJourney = 'leaving';
+  }
+
+  private startCoreJourney(progress: number, target: 0 | 1) {
+    this.flight = null;
+    this.modal.classList.remove('is-ready');
+    this.modal.dataset.journey = 'detail';
+    this.terminal.inert = true;
+    this.home.classList.remove('is-focusing', 'is-returning');
+    this.home.inert = true;
+    if (target === 1) this.element.scrollTop = 0;
+    this.element.dataset.coreJourney = target ? 'entering' : 'leaving';
+    this.options.onFocus({ x: .5, y: .5 });
+    const cancel = this.element.querySelector<HTMLButtonElement>('.sm-core-cancel')!;
+    cancel.hidden = false;
+    cancel.focus({ preventScroll: true });
+    const result = new Promise<boolean>(resolve => { this.coreJourney = { progress, target, resolve }; });
+    this.paintCoreJourney(progress);
+    if (this.reduced) this.finishCoreJourney(target);
+    return result;
+  }
+
+  private paintCoreJourney(progress: number) {
+    const source = this.flightLayout();
+    const grow = smoothRange(progress, 0, .69);
+    const center = smoothRange(progress, 0, .46);
+    this.placeGlyph({
+      x: source.x + (innerWidth / 2 - source.x) * center,
+      y: source.y + (innerHeight / 2 - source.y) * center,
+      size: source.size * Math.pow(Math.max(innerWidth, innerHeight) * 3.5 / source.size, grow),
+    });
+    this.voyager.style.opacity = String(1 - smoothRange(progress, .49, .72));
+    const reveal = smoothRange(progress, .44, 1);
+    const field = this.home.querySelector<HTMLElement>('.sm-field')!;
+    field.style.transform = `scale(${Math.pow(.065, 1 - reveal)})`;
+    field.style.opacity = String(smoothRange(progress, .43, .69));
+    // A viewport origin, also on a tall mobile map: no sideways page slide.
+    const left = field.offsetLeft, top = field.offsetTop;
+    field.style.transformOrigin = `${innerWidth / 2 - left}px ${innerHeight / 2 + this.element.scrollTop - top}px`;
+    this.element.style.setProperty('--core-space-reveal', String(smoothRange(progress, .7, 1)));
+    this.element.dataset.coreProgress = progress.toFixed(3);
+  }
+
+  private clearCoreJourneyStyles() {
+    delete this.element.dataset.coreJourney;
+    delete this.element.dataset.coreProgress;
+    this.element.style.removeProperty('--core-space-reveal');
+    const field = this.home.querySelector<HTMLElement>('.sm-field')!;
+    field.style.removeProperty('transform'); field.style.removeProperty('transform-origin'); field.style.removeProperty('opacity');
+    this.voyager.style.removeProperty('opacity');
+    this.element.querySelector<HTMLElement>('.sm-core-cancel')!.hidden = true;
+  }
+
+  private finishCoreJourney(target: 0 | 1) {
+    const journey = this.coreJourney;
+    if (!journey) return;
+    this.coreJourney = null;
+    this.clearCoreJourneyStyles();
+    if (target === 1) {
+      this.modalOpen = false;
+      this.finishExit(false);
+      this.setLevel('directions');
+      this.options.onFocus(null);
+      this.element.querySelector<HTMLElement>('.sm-level-back')!.focus({ preventScroll: true });
+      this.element.querySelector('.sm-announcer')!.textContent = '已进入 IXD CORE 六方向星系';
+    } else {
+      this.home.classList.add('is-core-restored');
+      this.setLevel('main');
+      this.element.scrollTop = this.mainScroll;
+      this.home.classList.add('is-focusing');
+      this.home.inert = true;
+      this.modalOpen = true;
+      this.finishEntry();
+      const geometry = this.flightLayout();
+      this.options.onFocus({ x: geometry.x / innerWidth, y: geometry.y / innerHeight });
+      this.detailHost.querySelector<HTMLElement>('[data-pf="directions"]')?.focus({ preventScroll: true });
+      this.element.querySelector('.sm-announcer')!.textContent = '已返回 IXD CORE 社团介绍';
+    }
+    journey.resolve(target === 1);
+  }
   setConnection(connected: boolean) {
     this.home.querySelector<HTMLElement>('.sm-system-state')!.innerHTML = connected ? '<i></i>星图已连接 <span>/ SYSTEM ONLINE</span>' : '<i></i>平台连接暂不可用 <span>/ RETRY IN CONTENT</span>';
   }
@@ -228,7 +356,7 @@ export class StarMapUI {
       if (this.activeStar !== config.routeKey && node.dataset.visualPreset !== config.visualPreset) {
         const preset = starMap.find(star => star.visualPreset === config.visualPreset);
         if (preset) {
-          node.querySelector('.sm-star-glyph')!.innerHTML = galaxyGlyph({ ...model, visualPreset: preset.visualPreset, motionPreset: preset.motionPreset });
+          node.querySelector('.sm-star-glyph')!.innerHTML = galaxyGlyph({ ...model, visualPreset: preset.visualPreset, motionPreset: preset.motionPreset }, model.id);
           node.dataset.visualPreset = preset.visualPreset;
         }
       }
@@ -238,7 +366,9 @@ export class StarMapUI {
   setReduced(reduced: boolean) {
     this.reduced = reduced;
     this.element.dataset.reduced = String(reduced);
-    if (reduced && this.modalOpen) {
+    if (reduced && this.coreJourney) {
+      this.finishCoreJourney(this.coreJourney.target);
+    } else if (reduced && this.modalOpen) {
       this.finishEntry();
     } else if (reduced && !this.modal.hidden) {
       this.finishExit(true);
@@ -253,6 +383,13 @@ export class StarMapUI {
   /** Shares the app's frame clock; only the node artwork drifts, never its hitbox. */
   update(dt: number) {
     if (!this.visible || document.hidden) return;
+    if (this.coreJourney) {
+      const journey = this.coreJourney;
+      journey.progress = Math.max(0, Math.min(1, journey.progress + (journey.target ? 1 : -1) * Math.min(dt, .1) / 1.9));
+      this.paintCoreJourney(journey.progress);
+      if (journey.progress === journey.target) this.finishCoreJourney(journey.target);
+      return;
+    }
     const x = this.reduced || !this.modal.hidden ? 0 : this.pointer.targetX;
     const y = this.reduced || !this.modal.hidden ? 0 : this.pointer.targetY;
     if (Math.abs(x - this.pointer.x) + Math.abs(y - this.pointer.y) >= 0.0001) {
@@ -286,12 +423,14 @@ export class StarMapUI {
   }
 
   /** Also supports future navigation or deep links without synthesizing clicks. */
-  openStar(id: string): boolean {
-    if (!this.visible || !this.modal.hidden) return false;
+  openStar(id: string, restoreCoreParent = false): boolean {
+    if (!this.visible || !this.modal.hidden || this.coreJourney) return false;
     const star = starMap.find((node) => node.id === id);
     if (!star?.enabled || !star.content) return false;
     const button = this.element.querySelector<HTMLElement>(`[data-star="${star.id}"]`)!;
-    if ((button as HTMLButtonElement).disabled) return false;
+    // A parent return must remain available even if a refreshed configuration
+    // disables its entry. Content is still read through the authorized API.
+    if ((button as HTMLButtonElement).disabled && !(restoreCoreParent && id === 'core')) return false;
     this.setLevel(star.type === 'direction' ? 'directions' : 'main');
     this.returnFocus = button;
     this.home.querySelectorAll(".is-selected").forEach((node) => node.classList.remove("is-selected"));
@@ -307,6 +446,7 @@ export class StarMapUI {
   }
 
   closeDetail(restoreFocus = true) {
+    if ((this.coreJourney || this.preparingCoreEntry) && restoreFocus) { this.options.onLevelChange?.('main'); return; }
     if (this.modalOpen && restoreFocus && this.options.canClose && !this.options.canClose()) return;
     // Repeated Escape during flight/exit must not restart or cancel its cleanup.
     if (!this.modalOpen) {
@@ -316,6 +456,7 @@ export class StarMapUI {
       return;
     }
     this.modalOpen = false;
+    this.home.classList.remove('is-core-restored');
     this.options.onContentClose?.();
     this.modal.classList.remove("is-ready");
     this.modal.dataset.journey = "leaving";
@@ -338,7 +479,7 @@ export class StarMapUI {
     this.modal.classList.remove("is-ready");
     this.modal.dataset.journey = "idle";
     this.home.inert = false;
-    this.home.classList.remove("is-focusing", "is-returning");
+    this.home.classList.remove("is-focusing", "is-returning", "is-core-restored");
     delete this.modal.dataset.activeStar;
     this.home.querySelectorAll<HTMLElement>(".is-selected").forEach((node) => {
       node.classList.remove("is-selected");
@@ -354,21 +495,22 @@ export class StarMapUI {
   }
 
   private starMarkup(star: StarMapNode) {
-    const mobile = star.mobilePosition ?? star.position;
-    const style = `--x:${star.position.x * 100}%;--y:${star.position.y * 100}%;--mx:${mobile.x * 100}%;--my:${mobile.y * 100}%;--star-color:${star.color ?? "#97aacd"};--brightness:${star.brightness}`;
+    const layout = coreSystemLayout[star.id] ?? star;
+    const mobile = layout.mobilePosition ?? layout.position;
+    const style = `--x:${layout.position.x * 100}%;--y:${layout.position.y * 100}%;--mx:${mobile.x * 100}%;--my:${mobile.y * 100}%;--star-color:${star.color ?? "#97aacd"};--brightness:${star.brightness}`;
     if (!star.enabled) return `<span class="sm-empty" style="${style}" tabindex="0" role="img" aria-label="未探索星，等待下一次探索，暂不可进入"><i class="sm-empty-glyph">${dormantGlyph(star)}</i><span>UNEXPLORED<br><b>等待下一次探索</b></span></span>`;
     return `<button type="button" class="sm-star sm-star-${star.type}" style="${style}" data-star="${star.id}" data-visual-preset="${star.visualPreset}" data-motion-preset="${star.motionPreset}" data-route="${escape(star.route ?? "")}" aria-label="${escape(star.title)}，打开详情" aria-haspopup="dialog" aria-expanded="false">
-      <span class="sm-star-glyph" aria-hidden="true">${galaxyGlyph(star)}</span>
+      <span class="sm-star-glyph" aria-hidden="true">${galaxyGlyph(star, star.id)}</span>
       ${star.number ? `<span class="sm-star-number" aria-hidden="true">${star.number}</span>` : ""}
       <span class="sm-star-label">${escape(star.title)}<span class="sm-star-meta">${escape(star.type === "direction" ? star.content!.eyebrow : star.subtitle)}</span></span>
-      <span class="sm-star-hover" aria-hidden="true">${star.type === "direction" ? escape(star.subtitle) : "探索社团节点"} <b>↗</b></span>
+      ${star.type === 'direction' ? `<span class="sm-star-hover" aria-hidden="true">${escape(star.subtitle)} <b>↗</b></span>` : ''}
     </button>`;
   }
 
   private linesMarkup() {
     const lines = (mobile: boolean) => constellationLinks.map(([start, end]) => {
-      const a = starMap.find((node) => node.id === start)!;
-      const b = starMap.find((node) => node.id === end)!;
+      const a = coreSystemLayout[start] ?? starMap.find((node) => node.id === start)!;
+      const b = coreSystemLayout[end] ?? starMap.find((node) => node.id === end)!;
       const p = mobile ? a.mobilePosition ?? a.position : a.position;
       const q = mobile ? b.mobilePosition ?? b.position : b.position;
       return `<line x1="${p.x * 1000}" y1="${p.y * 1000}" x2="${q.x * 1000}" y2="${q.y * 1000}"/>`;
@@ -482,6 +624,7 @@ export class StarMapUI {
   }
 
   private onResize = () => {
+    if (this.coreJourney) { this.paintCoreJourney(this.coreJourney.progress); return; }
     if (this.modal.hidden) return;
     if (this.flight) {
       this.flight = { ...this.flight, from: { ...this.geometry }, duration: Math.max(1, this.flight.duration - this.flight.elapsed), elapsed: 0, hold: false };
@@ -529,7 +672,7 @@ export class StarMapUI {
       else if (action === "settings") this.options.onSettings();
       else if (action === "sound") this.options.onSound();
       else if (action === "replay") this.options.onReplay();
-      else if (action === 'main-level') { this.setLevel('main'); this.options.onLevelChange?.('main'); }
+      else if (action === 'main-level' || action === 'core-back') this.options.onLevelChange?.('main');
       return;
     }
     const star = target.closest<HTMLElement>("[data-star]");
@@ -542,6 +685,14 @@ export class StarMapUI {
 
   private onKeyDown = (event: KeyboardEvent) => {
     if (!this.visible) return;
+    if (this.coreJourney) {
+      if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); this.options.onLevelChange?.('main'); }
+      if (event.key === 'Tab') { event.preventDefault(); event.stopPropagation(); }
+      return;
+    }
+    if (event.key === 'Escape' && this.level === 'directions' && this.modal.hidden) {
+      event.preventDefault(); event.stopPropagation(); this.options.onLevelChange?.('main'); return;
+    }
     if (this.modalOpen || !this.modal.hidden) {
       event.stopPropagation();
       if (event.key === "Escape") { event.preventDefault(); this.closeDetail(); }

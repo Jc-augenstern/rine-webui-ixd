@@ -1,6 +1,6 @@
 # IXD Current State
 
-核对日期：2026-09-27（Asia/Shanghai）。本地 M1～M6 实现与23项验收已完成，正式服务器部署准备已交付。当前结果以 [PLATFORM_VERIFICATION](PLATFORM_VERIFICATION.md) 和实时 Git/运行状态为准；长期原则见 [IXD_SPEC](IXD_SPEC.md)，接手规则见 [AGENTS](../AGENTS.md)。
+核对日期：2026-09-28（Asia/Shanghai）。平台 M1～M6 与23项验收保留，见 [PLATFORM_VERIFICATION](PLATFORM_VERIFICATION.md)；最新一轮前台星图与赛事改造见 [STAR_MAP_REDESIGN](STAR_MAP_REDESIGN.md)。实际状态以当前 Git/运行结果为准；长期原则见 [IXD_SPEC](IXD_SPEC.md)，接手规则见 [AGENTS](../AGENTS.md)。
 
 ## 1. 仓库、分支和恢复基线
 
@@ -29,6 +29,8 @@
 
 ## 3. 当前本机入口与操作
 
+最新前台增量：六个一级主星拥有栏目专属图形与局部动效；公告、个人中心与六方向原造型保留。CORE 详情的六个文字捷径已移除，主要入口驱动同一 SVG 放大后进入固定六方向小型星系，逆向返回 CORE 详情，再关闭才回一级图。赛事列表采用紧凑筛选和精度/时区感知的时间标尺，未知时间不显示比例。一级星图不再生成“探索社团节点”浮层。代码、逐项验证和继续开发方法见 [本轮报告](STAR_MAP_REDESIGN.md)。
+
 - 前台：[http://127.0.0.1:5173/](http://127.0.0.1:5173/)
 - 后台：[http://127.0.0.1:5174/admin/](http://127.0.0.1:5174/admin/)
 - API：[http://127.0.0.1:3000/api/v1/health](http://127.0.0.1:3000/api/v1/health)
@@ -43,6 +45,8 @@
 npm run dev 仍启动前台热更新；npm run dev:api / dev:admin 可独立开发。总控制器的 API 不自动 watch，后端源码修改后重启；不要同时占用同一端口。npm run build 生成 dist，build:all 另生成 admin/dist 和 server/dist。
 
 ## 4. 验证与局限
+
+以下平台全套测试为 2026-09-27 的历史验收。2026-09-28 的新增前台验证单独见 [STAR_MAP_REDESIGN](STAR_MAP_REDESIGN.md)；本轮有意修改 glyph、星图 UI 与平台前台展示，未修改下列开场/银河、认证、后台、API 或数据库代码。
 
 - 真实 PostgreSQL/SMTP 平台测试 22/22（含父测试）；前台认证 11/11、缓存保护、原内容 18/18、配色/视口及全部构建通过。
 - 后台真实表单覆盖六类内容、方向/路线/页面、附件、用户授权、冲突保留输入；跨角色公告发布、申请审批两条实际录屏在 .tools/platform-frontend-real/videos/。

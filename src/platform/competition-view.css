@@ -1,0 +1,91 @@
+/* Competition controls occupy two short rows in the existing data terminal. */
+.pf-content .pf-competition-filters {
+  grid-template-columns: repeat(4, minmax(0, 1fr)) minmax(76px, .9fr) minmax(64px, .8fr);
+  gap: 8px 10px;
+  margin: 16px 0 20px;
+  padding: 12px 0 16px;
+  border-bottom: 1px solid var(--sm-line);
+}
+.pf-content .pf-competition-filters label { margin: 0; font-size: 10px; line-height: 1.6; color: #99a9c8; }
+.pf-competition-filters .pf-competition-search,
+.pf-competition-filters > label:nth-child(2) { grid-column: span 3; }
+.pf-competition-filters > label:nth-child(3),
+.pf-competition-filters > label:nth-child(4) { grid-column: span 2; }
+.pf-content .pf-competition-filters input,
+.pf-content .pf-competition-filters select {
+  margin-top: 4px;
+  min-height: 34px;
+  height: 34px;
+  padding: 5px 8px;
+  border-color: #64759877;
+  background: #101a2c55;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.pf-content .pf-competition-filters input::placeholder { color: #8697b5; opacity: 1; }
+.pf-content .pf-competition-filters button { margin: 0; min-height: 34px; height: 34px; padding: 4px 10px; font-size: 11px; }
+.pf-content .pf-competition-row { padding: 14px 0 22px; }
+.pf-competition-row-heading { display: flex; align-items: flex-start; gap: 16px; }
+.pf-competition-row-heading > div { flex: 1; min-width: 0; }
+.pf-content .pf-competition-row h3 { margin: 4px 0 13px; font-size: 17px; line-height: 1.65; }
+.pf-content .pf-competition-row h3 a { color: #d2d8fb; }
+.pf-content .pf-competition-row h3 a:hover { color: #f1f3ff; }
+.pf-competition-row .pf-cover-thumb { width: 62px; height: 54px; opacity: .85; margin-top: 4px; }
+.pf-competition-row-heading .pf-meta:empty { display: none; }
+.pf-content .pf-competition-summary { margin: 10px 0 12px; color: #a3b1cc; font-size: 12px; }
+.pf-competition-published { align-items: center; gap: 7px; font-size: 10px; color: #8d9fbe; }
+.pf-competition-published a { margin-left: auto; font-size: 11px; }
+
+/* Fine measuring marks and a single fixed pointer, never a rounded loading pill. */
+.pf-competition-ruler { --ruler-ink: #a9b8e6; --ruler-active: #c1c9fc; color: var(--ruler-ink); }
+.pf-competition-ruler.is-detail { margin: 22px 0; padding: 18px 0; border-block: 1px solid var(--sm-line); }
+.pf-competition-clock { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 5px 14px; }
+.pf-competition-status { display: inline-flex; align-items: center; gap: 7px; font-size: 11px; letter-spacing: .07em; color: #b9c5e5; }
+.pf-competition-status::before { content: ''; width: 4px; height: 4px; border: 1px solid currentColor; transform: rotate(45deg); }
+.pf-competition-clock strong { color: #e0e5fb; font-size: 13px; font-weight: 400; font-variant-numeric: tabular-nums; }
+.pf-competition-scale { position: relative; height: 45px; margin: 12px 1px 8px; }
+.pf-competition-scale-base, .pf-competition-scale-fill { position: absolute; top: 33px; left: 0; height: 1px; }
+.pf-competition-scale-base { width: 100%; background: #61749c88; }
+.pf-competition-scale-fill { width: var(--competition-progress); background: linear-gradient(90deg, #7f9bca99, var(--ruler-active)); }
+.pf-competition-ticks { position: absolute; inset: 19px 0 auto; display: flex; align-items: flex-end; justify-content: space-between; height: 14px; }
+.pf-competition-ticks i { display: block; width: 1px; height: 5px; background: #788dad88; }
+.pf-competition-ticks i.is-mid { height: 9px; background: #8d9fc9a6; }
+.pf-competition-ticks i.is-major { height: 14px; background: #b1bce2b3; }
+.pf-competition-needle { position: absolute; top: 17px; bottom: 6px; left: var(--competition-progress); width: 1px; background: var(--ruler-active); }
+.pf-competition-needle::before { content: ''; position: absolute; top: -2px; left: -2px; width: 5px; height: 5px; background: #dbe1ff; transform: rotate(45deg); }
+.pf-competition-needle b { position: absolute; left: 0; top: -21px; transform: translateX(-50%); white-space: nowrap; font-size: 9px; font-weight: 400; letter-spacing: .1em; color: #d3daf5; }
+.pf-competition-needle[data-edge="start"] b { transform: none; }
+.pf-competition-needle[data-edge="end"] b { transform: translateX(-100%); }
+.pf-competition-unconfirmed { position: absolute; left: 50%; top: -4px; transform: translateX(-50%); color: #7c8aa6; letter-spacing: .35em; font-size: 10px; }
+.pf-competition-endpoints { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; }
+.pf-competition-endpoints > div:last-child { text-align: right; }
+.pf-competition-endpoints span, .pf-competition-endpoints time, .pf-competition-endpoints small { display: block; }
+.pf-competition-endpoints span { font-size: 10px; color: #8e9fbd; }
+.pf-competition-endpoints time { margin-top: 2px; font-size: 11px; font-variant-numeric: tabular-nums; color: #c0cce6; }
+.pf-competition-endpoints small { font-size: 9px; line-height: 1.6; color: #8294b4; overflow-wrap: anywhere; }
+.pf-content .pf-competition-time-note { margin: 8px 0 0; font-size: 10px; line-height: 1.65; color: #90a0bc; }
+.pf-competition-ruler[data-phase="unknown"] .pf-competition-scale { opacity: .6; }
+.pf-competition-ruler[data-phase="unknown"] .pf-competition-clock strong { color: #a2b0cd; font-size: 12px; }
+.pf-competition-ruler[data-phase="closing"] { --ruler-active: #c2b3ef; }
+.pf-competition-ruler[data-phase="closing"] .pf-competition-status { color: #c9bdf1; }
+.pf-competition-ruler[data-phase="closed"] { --ruler-active: #8d9dbd; }
+.pf-competition-ruler[data-phase="closed"] .pf-competition-clock strong,
+.pf-competition-ruler[data-phase="upcoming"] .pf-competition-clock strong { color: #b1bfdc; }
+
+@media (max-width: 760px) {
+  .pf-content .pf-competition-filters { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 9px 10px; padding-top: 6px; }
+  .pf-competition-filters .pf-competition-search,
+  .pf-content .pf-competition-filters button { grid-column: 1 / -1; }
+  .pf-competition-filters > label:nth-child(2),
+  .pf-competition-filters > label:nth-child(3),
+  .pf-competition-filters > label:nth-child(4) { grid-column: span 1; }
+  .pf-content .pf-competition-filters input,
+  .pf-content .pf-competition-filters select { height: 38px; min-height: 38px; font-size: 16px; }
+  .pf-content .pf-competition-filters button { height: 38px; min-height: 38px; }
+  .pf-content .pf-competition-row h3 { font-size: 16px; }
+  .pf-competition-clock { gap: 4px 10px; }
+  .pf-competition-clock strong { font-size: 12px; }
+  .pf-competition-endpoints { gap: 12px; }
+  .pf-competition-endpoints time { font-size: 10px; }
+  .pf-competition-ticks i:not(.is-major):not(.is-mid):nth-child(even) { visibility: hidden; }
+}

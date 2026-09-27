@@ -1,0 +1,48 @@
+.sm-core-system, .sm-core-heading { display: none; }
+.sm-root[data-level="directions"] .sm-home { min-height: 740px; }
+.sm-root[data-level="directions"] :is(.sm-intro, .sm-growth, .sm-empty, .sm-direct, .sm-map-coordinates) { display: none; }
+.sm-root[data-level="directions"] .sm-field { inset: 168px 9% 145px; }
+.sm-root[data-level="directions"] .sm-core-system { display: block; position: absolute; inset: 0; overflow: clip; pointer-events: none; }
+.sm-core-system svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.sm-core-arms { fill: none; stroke: #b7abf3; stroke-width: 1.1; stroke-opacity: .2; }
+.sm-core-arms path { vector-effect: non-scaling-stroke; }
+.sm-core-orbits { fill: none; stroke: #8da0d1; stroke-width: .7; stroke-dasharray: 2 11; opacity: .25; }
+.sm-core-dust { fill: #c3d9ff; }
+.sm-core-atmosphere { position: absolute; inset: -10%; background: radial-gradient(ellipse 30% 19% at 50% 50%, #bac1ff12, transparent 94%), radial-gradient(ellipse 50% 24% at 52% 50%, #665eab14, transparent 95%); }
+.sm-core-center { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); display: grid; justify-items: center; gap: 9px; text-align: center; color: #bec4e7; }
+.sm-core-center i { width: 6px; height: 6px; border: 1px solid #bdd7ff; transform: rotate(45deg); box-shadow: 0 0 14px #a5baff44; }
+.sm-core-center span { font-size: 11px; letter-spacing: .23em; }
+.sm-core-center small { font-size: 9px; white-space: nowrap; color: #8c9dbb; letter-spacing: .08em; }
+.sm-root[data-level="directions"] .sm-core-heading { display: block; position: absolute; left: 50%; top: -69px; transform: translateX(-50%); text-align: center; white-space: nowrap; pointer-events: none; }
+.sm-core-heading p { font-size: 8px; color: #9b9bc8; letter-spacing: .2em; }
+.sm-core-heading h2 { font-size: 23px; font-weight: 300; margin: 9px 0 7px; letter-spacing: .12em; color: #e0e7f9; }
+.sm-core-heading > span { color: #8397b7; font-size: 10px; }
+.sm-root[data-core-journey] { overflow: hidden !important; }
+.sm-root[data-core-journey] .sm-field { will-change: transform, opacity; transition: none; }
+.sm-root[data-core-journey] :is(.sm-header, .sm-footer, .sm-level-back) { opacity: var(--core-space-reveal, 0); pointer-events: none; transition: none; }
+.sm-root[data-core-journey] .sm-modal::before { opacity: 0; }
+.sm-root[data-core-journey] :is(.sm-focus-link, .sm-focus-caption, .sm-survey, .sm-flight-cancel) { visibility: hidden; }
+.sm-root[data-core-journey] .sm-terminal { pointer-events: none; }
+.sm-root .sm-core-cancel { position: fixed; z-index: 12; top: 22px; right: 4.2%; padding: 10px; font-size: 12px; color: #bac7e7; }
+.sm-core-cancel[hidden] { display: none !important; }
+/* Returning reaches an already-focused CORE. Hidden main labels must not fade
+   through the last frame as they become displayable again. Normal close clears
+   this class before playing the existing return-to-main transitions. */
+.sm-home.is-core-restored.is-focusing :is(.sm-intro, .sm-star:not(.is-selected), .sm-empty, .sm-constellation, .sm-growth, .sm-map-coordinates) { opacity: 0 !important; transition: none !important; }
+.sm-home.is-core-restored.is-focusing :is(.sm-header, .sm-footer) { transition: none; }
+.sm-root[data-level="directions"] .sm-home.is-focusing :is(.sm-core-system, .sm-core-heading) { opacity: 0; transition: opacity .35s; }
+.sm-root[data-level="directions"] .sm-home.is-returning :is(.sm-core-system, .sm-core-heading) { opacity: 1; transition: opacity .4s .4s; }
+@media (max-width: 760px) {
+  .sm-root[data-level="directions"] .sm-home { min-height: 1100px; }
+  .sm-root[data-level="directions"] .sm-field { inset: 223px 24px auto; height: 715px; }
+  .sm-root[data-level="directions"] .sm-core-heading { top: -93px; }
+  .sm-core-heading h2 { font-size: 24px; }
+  .sm-root[data-level="directions"] .sm-star-glyph { width: 76px; height: 76px; margin: -38px; }
+  .sm-root[data-level="directions"] .sm-star-label { top: 51px; max-width: 155px; font-size: 12px; }
+  .sm-root[data-level="directions"] .sm-star-number { left: 49px; top: -7px; }
+  .sm-core-center { top: 53%; }
+  .sm-core-center small { display: none; }
+  .sm-core-center span { font-size: 8px; }
+  .sm-core-arms { stroke-opacity: .12; }
+  .sm-core-orbits { opacity: .15; }
+}
