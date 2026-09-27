@@ -29,7 +29,7 @@
 | GET `/me/favorites` | 自己收藏及可见内容；登录即可读取，无邮箱验证门槛 |
 | PUT/DELETE `/me/favorites/:contentId` | 收藏/取消；PUT 可带 reminderHours（24/72/168小时），返回 contentId/favorited/reminderHours；DELETE 返回 contentId/favorited=false |
 | PUT `/me/announcements/:id/read` | 登录用户记录当前有效 attentionRevision；仅此本人已读写入不要求邮箱已验证；返回 id/read/attentionRevision |
-| GET `/notifications` / PUT `/notifications/:id/read` | 仅自己的通知及已读状态；登录即可，无邮箱验证门槛 |
+| GET `/notifications` / PUT `/notifications/:id/read` | 仅自己的通知及已读状态；登录即可，无邮箱验证门槛。关联内容当前不可见时，两接口均保留通知身份与已读状态，将 title/body 投影为“关联内容当前不可访问”、contentId 置 null；不改写通知历史 |
 
 ## 内容与发布
 

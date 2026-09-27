@@ -254,6 +254,40 @@ test('real PostgreSQL content, collaboration and durable jobs', { timeout: 120_0
       clock.now = base; await db.query("UPDATE users SET member_status='NONE' WHERE id=$1", [users.bob]);
     });
 
+    await t.test('notification projections hide content after membership loss, withdrawal and expiry without rewriting history', async () => {
+      for (const cause of ['membership', 'withdrawal', 'expiry'] as const) {
+        await db.query("UPDATE users SET member_status='MEMBER' WHERE id=$1", [users.bob]);
+        const row = await publish(await create('announcements', {
+          ...payload('announcements', `成员通知标题-${cause}`), visibility: 'MEMBERS', summary: `成员通知摘要-${cause}`,
+        }), { notifyImportantUpdate: true, ...(cause === 'expiry' ? { expiresAt: future(0.1) } : {}) });
+        await runDueJobs(ctx);
+        const history = (await db.query('SELECT * FROM notifications WHERE user_id=$1 AND content_id=$2', [users.bob, row.id])).rows[0];
+        assert.ok(history);
+        assert.equal(history.title, `重要公告：成员通知标题-${cause}`);
+        assert.equal(history.body, `成员通知摘要-${cause}`);
+        const original = (await bob.call('GET', '/notifications?pageSize=100')).data.find((item: any) => item.id === history.id);
+        assert.equal(original.title, history.title); assert.equal(original.body, history.body); assert.equal(original.contentId, row.id);
+        if (cause === 'membership') await db.query("UPDATE users SET member_status='NONE' WHERE id=$1", [users.bob]);
+        else if (cause === 'withdrawal') await admin.call('POST', `/admin/contents/${row.id}/withdraw`, { expectedRevision: row.revision });
+        else clock.now = new Date(future(0.11));
+        try {
+          await bob.call('GET', `/contents/${row.id}`, undefined, 404);
+          const unread = (await bob.call('GET', '/notifications?unread=true&pageSize=100')).data.find((item: any) => item.id === history.id);
+          const expected = { ...original, title: '关联内容当前不可访问', body: '关联内容当前不可访问', contentId: null };
+          assert.deepEqual(unread, expected, `${cause}: notification list must apply current visibility`);
+          const read = (await bob.call('PUT', `/notifications/${history.id}/read`, {})).data;
+          assert.deepEqual(read, { ...expected, readAt: clock.now.toISOString() });
+          assert.deepEqual((await bob.call('GET', '/notifications?unread=false&pageSize=100')).data.find((item: any) => item.id === history.id), read);
+          await alice.call('PUT', `/notifications/${history.id}/read`, {}, 404);
+          const preserved = (await db.query('SELECT * FROM notifications WHERE id=$1', [history.id])).rows[0];
+          assert.deepEqual({ ...preserved, read_at: null }, history, 'projection must not rewrite notification facts');
+        } finally {
+          clock.now = base;
+          await db.query("UPDATE users SET member_status='NONE' WHERE id=$1", [users.bob]);
+        }
+      }
+    });
+
     await t.test('own work drafts cannot elevate status, edit others or bypass review', async () => {
       let work = (await alice.call('POST', '/me/works', { payload: payload('works', '用户投稿', { authors: [{ userId: users.alice, name: 'Alice' }] }) }, 201)).data;
       await bob.call('PATCH', `/me/works/${work.id}`, { expectedRevision: work.revision, payload: work.payload }, 404);

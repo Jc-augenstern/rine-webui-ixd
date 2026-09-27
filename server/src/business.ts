@@ -42,6 +42,14 @@ function memberDTO(row: Record<string, any>, management = false): ProjectMemberD
 function notificationDTO(row: Record<string, any>): NotificationDTO {
   return { id: row.id, type: row.type, title: row.title, body: row.body, contentId: row.content_id, readAt: date(row.read_at), createdAt: row.created_at.toISOString() };
 }
+/** Stored notification facts never grant continued access to their linked content. */
+async function readableNotification(db: Database, ctx: AppContext, actor: Actor, row: Record<string, any>): Promise<NotificationDTO> {
+  const notification = notificationDTO(row);
+  if (row.content_id && !await getVisibleContent(db, row.content_id, actor, ctx.now())) {
+    return { ...notification, title: '关联内容当前不可访问', body: '关联内容当前不可访问', contentId: null };
+  }
+  return notification;
+}
 const applicationFrom = `FROM project_applications a JOIN contents c ON c.id=a.project_id
   LEFT JOIN content_versions pv ON pv.id=c.published_version_id JOIN content_versions v ON v.id=c.draft_version_id
   JOIN project_positions p ON p.id=a.position_id JOIN users u ON u.id=a.user_id`;
@@ -137,12 +145,12 @@ export async function registerBusinessRoutes(app: FastifyInstance, ctx: AppConte
     const count = await ctx.db.query<{ count: string }>(`SELECT count(*) FROM notifications WHERE user_id=$1 ${where}`, values);
     values.push(query.pageSize, (query.page - 1) * query.pageSize);
     const result = await ctx.db.query(`SELECT * FROM notifications WHERE user_id=$1 ${where} ORDER BY created_at DESC,id DESC LIMIT $2 OFFSET $3`, values);
-    return { data: result.rows.map(notificationDTO), meta: { page: query.page, pageSize: query.pageSize, total: Number(count.rows[0].count) } };
+    return { data: await Promise.all(result.rows.map(row => readableNotification(ctx.db, ctx, actor, row))), meta: { page: query.page, pageSize: query.pageSize, total: Number(count.rows[0].count) } };
   });
   routes.put('/api/v1/notifications/:id/read', async request => {
     const actor = requireActor(request, false), { id } = idParams.parse(request.params); z.strictObject({}).parse(request.body ?? {});
     const result = await ctx.db.query('UPDATE notifications SET read_at=COALESCE(read_at,$3) WHERE id=$1 AND user_id=$2 RETURNING *', [id, actor.user.id, ctx.now()]);
-    if (!result.rows[0]) throw new HttpError(404, 'NOT_FOUND', '通知不存在'); return { data: notificationDTO(result.rows[0]) };
+    if (!result.rows[0]) throw new HttpError(404, 'NOT_FOUND', '通知不存在'); return { data: await readableNotification(ctx.db, ctx, actor, result.rows[0]) };
   });
   routes.put('/api/v1/competitions/:id/intent', async request => {
     const actor = requireActor(request), { id } = idParams.parse(request.params), input = z.strictObject({ note: z.string().max(2000).default('') }).parse(request.body ?? {});
