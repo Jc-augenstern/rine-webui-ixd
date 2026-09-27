@@ -28,7 +28,7 @@ for (const file of ['archive-cassette', 'archive-assembly']) {
   }
 }
 const manifest = JSON.parse(await readFile('public/manifest.webmanifest', 'utf8'));
-assert.equal(manifest.background_color, palette.paper[0]);
-assert.equal(manifest.theme_color, palette.paper[0]);
-assert((await readFile('index.html', 'utf8')).includes(`name="theme-color" content="${palette.paper[0]}"`));
+assert.equal(manifest.background_color, palette.paper[1]);
+assert.equal(manifest.theme_color, palette.paper[1]);
+assert((await readFile('index.html', 'utf8')).includes(`name="theme-color" content="${palette.paper[1]}"`));
 console.log(`Palette passed: minimum text contrast ${minimum.toFixed(2)}:1; both GLBs covered; PWA colors match.`);

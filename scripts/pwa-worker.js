@@ -45,6 +45,10 @@ self.addEventListener("fetch", event => {
   if (event.request.method !== "GET") return;
   const url = new URL(event.request.url);
   if (url.origin !== self.location.origin) return;
+  // Platform data always goes to the network, even if a future precache list is
+  // accidentally broadened. Admin navigation must never receive the star map.
+  if (/(?:^|\/)(?:api|admin|media)(?:\/|$)/i.test(url.pathname)) return;
+  if ([...url.searchParams.keys()].some(key => /token|password|session|csrf/i.test(key))) return;
   url.search = "";
   url.hash = "";
   const navigation = event.request.mode === "navigate" &&

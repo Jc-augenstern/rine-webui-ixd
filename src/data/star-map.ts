@@ -50,7 +50,7 @@ export interface StarMapNode extends StarVisualIdentity {
   color?: string;
 }
 
-export const starMap: readonly StarMapNode[] = [
+const legacyStarMap: readonly StarMapNode[] = [
   { ...nodeVisuals.ai, id: "ai", type: "direction", number: "01", title: "AI 与智能系统", subtitle: "让智能成为可体验的产品", position: { x: .59, y: .20 }, mobilePosition: { x: .27, y: .20 }, enabled: true, brightness: 1, color: "#a496fb", content: clubContent.ai, route: "#star/ai" },
   { ...nodeVisuals.robotics, id: "robotics", type: "direction", number: "02", title: "具身智能与机器人", subtitle: "感知、动作与人机协作", position: { x: .79, y: .40 }, mobilePosition: { x: .71, y: .30 }, enabled: true, brightness: .95, color: "#7eb8f5", content: clubContent.robotics, route: "#star/robotics" },
   { ...nodeVisuals.interaction, id: "interaction", type: "direction", number: "03", title: "新媒体与交互设计", subtitle: "交互体验与数字表达", position: { x: .48, y: .51 }, mobilePosition: { x: .28, y: .40 }, enabled: true, brightness: 1, color: "#92baf9", content: clubContent.interaction, route: "#star/interaction" },
@@ -72,6 +72,25 @@ export const starMap: readonly StarMapNode[] = [
     visualPreset: (["dormant-arc", "dormant-pair", "dormant-shard"] as const)[index % 3],
     motionPreset: "dormant", visualSeed: 1300 + index,
   })),
+];
+
+export const directionMap = legacyStarMap.filter(node => node.type === 'direction');
+const section = (id: string, title: string, subtitle: string, visual: StarVisualIdentity, x: number, y: number, mx: number, my: number): StarMapNode => ({
+  ...visual, id, title, subtitle, type: 'function', position: { x, y }, mobilePosition: { x: mx, y: my }, enabled: true,
+  brightness: .95, route: null, content: { eyebrow: subtitle, summary: '正在读取平台内容…', sections: [] },
+});
+/** Operational text comes from the API; authored positions and visual identities remain code-owned. */
+export const starMap: readonly StarMapNode[] = [
+  section('announcements', '公告中心', 'ANNOUNCEMENTS', nodeVisuals.ai, .59, .20, .28, .22),
+  section('competitions', '赛事中心', 'COMPETITIONS', nodeVisuals.competition, .79, .40, .73, .34),
+  section('projects', '项目广场', 'PROJECTS', nodeVisuals.project, .48, .51, .27, .46),
+  section('events', '活动与沙龙', 'EVENTS / SALONS', nodeVisuals.salon, .23, .64, .72, .59),
+  section('learning', '学习中心', 'LEARNING', nodeVisuals.hardware, .67, .72, .27, .73),
+  section('works', '作品与成果', 'WORKS', nodeVisuals.portfolio, .88, .75, .73, .87),
+  section('core', '社团介绍', 'IXD CORE', nodeVisuals.core, .10, .43, .19, .055),
+  section('account', '个人中心', 'MY IXD', nodeVisuals.join, .40, .85, .72, .09),
+  ...directionMap,
+  ...legacyStarMap.filter(node => node.type === 'unexplored'),
 ];
 
 export const constellationLinks: readonly (readonly [string, string])[] = [

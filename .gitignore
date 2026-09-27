@@ -27,3 +27,9 @@ reference/local-files-connection.js
 public/fonts/novecento/
 .vercel/
 .wrangler/
+
+# Platform persistence and private local delivery; never commit real data or secrets.
+.local/
+server/dist/
+admin/dist/
+coverage/

@@ -10,6 +10,8 @@ import { IxdPortal, PORTAL_DURATION, REDUCED_PORTAL_DURATION } from "./ui/ixd-po
 import "./ixd-experience.css";
 import { StartupPreparation, PREPARATION_DURATION, PREPARATION_FADE_DURATION } from "./startup-preparation";
 import { WELCOME_FLASH_DURATION_MS } from "./welcome-transition";
+import { platformApi } from './platform/api';
+import { PlatformUI } from './platform/platform-ui';
 
 type Phase =
   | "preparing"
@@ -51,6 +53,8 @@ export class IxdExperience {
   private galaxyHost = document.createElement("section");
   private galaxy?: GalaxyScene;
   private map?: StarMapUI;
+  private platform?: PlatformUI;
+  private stopSession?: () => void;
   private abort?: AbortController;
   private lastBoot = -1;
   private sound = true;
@@ -84,7 +88,10 @@ export class IxdExperience {
     this.login = new LoginPanel(
       options.host,
       (credentials) => void this.authenticate(credentials),
+      { guest: () => this.enterAsVisitor(), resume: () => void this.resumeSession() },
     );
+    this.stopSession = platformApi.subscribe(session => this.login.setSession(session?.user ?? null));
+    void platformApi.refreshSession().catch(() => {});
     options.host.classList.add("ixd-experience");
     options.host.addEventListener("pointermove", this.pointer, {
       passive: true,
@@ -92,9 +99,18 @@ export class IxdExperience {
     options.host.addEventListener("pointerleave", this.pointerLeave, { passive: true });
     options.host.addEventListener("pointercancel", this.pointerLeave, { passive: true });
     window.addEventListener("blur", this.pointerLeave);
+    window.addEventListener('hashchange', this.authRoute);
     document.addEventListener("visibilitychange", this.visibility);
     this.setPhase("preparing");
   }
+  private authRoute = () => {
+    // Let the platform's dirty-form navigation guard run before leaving a draft.
+    queueMicrotask(() => {
+      if (!/^#auth\/(verify-email|reset-password)\?/.test(location.hash)) return;
+      if (this.phase === 'login') this.login.show();
+      else if (!['preparing', 'intro', 'login-enter'].includes(this.phase)) this.restart();
+    });
+  };
   private setPhase(phase: Phase) {
     this.phase = phase;
     this.age = 0;
@@ -130,7 +146,7 @@ export class IxdExperience {
       if (request.signal.aborted) return;
       if (!result.ok) {
         this.setPhase("login");
-        this.login.error();
+        this.login.error(result.code === 'INVALID_IDENTITY' ? 'ACCESS DENIED / INVALID IDENTITY' : `ACCESS DENIED / ${result.code} · ${result.message ?? '请稍后重试'}`);
         return;
       }
       this.setPhase("confirmed");
@@ -142,6 +158,21 @@ export class IxdExperience {
         this.login.error("ACCESS DENIED / CHANNEL UNAVAILABLE");
       }
     }
+  }
+  private enterAsVisitor() {
+    if (this.phase !== 'login') return;
+    this.login.hide(); this.setPhase('welcome');
+    this.options.boot.renderWelcome(18.52);
+    this.options.audio.syncBootClock(18.52);
+  }
+  private async resumeSession() {
+    if (this.phase !== 'login') return;
+    this.login.progress('RESTORING SESSION', '正在恢复会话');
+    try {
+      const session = await platformApi.refreshSession();
+      if (!session.user) { this.login.error('SESSION EXPIRED / 请重新登录'); return; }
+      this.prepareGalaxy(); this.enterGalaxy();
+    } catch { this.login.error('ACCESS DENIED / CHANNEL UNAVAILABLE'); }
   }
   private renderBoot(time: number) {
     if (time === this.lastBoot) return;
@@ -272,10 +303,15 @@ export class IxdExperience {
           this.syncInteraction();
           this.options.audio.play(position ? "open" : "back");
         },
-        onReplay: this.options.onReplay,
+        onReplay: () => { if (this.platform?.confirmClose() ?? true) this.options.onReplay(); },
         onSettings: this.options.onSettings,
         onSound: this.options.onSound,
+        onContentOpen: (id) => this.platform?.openFromMap(id),
+        onContentClose: () => this.platform?.closedFromMap(),
+        onLevelChange: () => this.platform?.mainLevel(),
+        canClose: () => this.platform?.confirmClose() ?? true,
       });
+      this.platform = new PlatformUI(this.map, { login: this.options.onReplay });
     }
     this.galaxy.setInteractionEnabled(false);
     this.galaxy.setPortalProgress(0);
@@ -306,6 +342,7 @@ export class IxdExperience {
     this.map?.show();
     this.syncInteraction();
     this.options.onGalaxy();
+    this.platform?.activate();
     // onGalaxy changes the parent layout and can resize/clear the WebGL canvas.
     // Repaint after that callback in this same frame before the mask is presented.
     this.galaxy?.update(0, this.elapsed);
@@ -315,6 +352,7 @@ export class IxdExperience {
     this.galaxy?.setInteractionEnabled(this.phase === "galaxy" && !this.detailOpen && !this.settingsOpen);
   }
   restart() {
+    this.platform?.suspend();
     this.abort?.abort();
     this.debugBridgePaused = false;
     this.portal.finish();
@@ -386,6 +424,8 @@ export class IxdExperience {
     };
   }
   dispose() {
+    this.stopSession?.();
+    this.platform?.dispose();
     this.abort?.abort();
     this.options.stage.inert = false;
     document.body.classList.remove("galaxy-active");
@@ -401,6 +441,7 @@ export class IxdExperience {
     this.options.host.removeEventListener("pointerleave", this.pointerLeave);
     this.options.host.removeEventListener("pointercancel", this.pointerLeave);
     window.removeEventListener("blur", this.pointerLeave);
+    window.removeEventListener('hashchange', this.authRoute);
     document.removeEventListener("visibilitychange", this.visibility);
   }
 }

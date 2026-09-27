@@ -1,0 +1,6 @@
+{
+  "name": "@ixd/admin", "private": true, "version": "1.0.0", "type": "module",
+  "scripts": { "dev": "vite --host 127.0.0.1 --port 5174 --strictPort", "build": "tsc -p tsconfig.json && vite build" },
+  "dependencies": { "react": "19.3.0", "react-dom": "19.3.0" },
+  "devDependencies": { "@types/react": "^19.2.0", "@types/react-dom": "^19.2.0" }
+}

@@ -1,4 +1,18 @@
-# IXD 星图开发约束（2026-09-21，优先于下方历史记录）
+# IXD 平台开发约束（2026-09-27，优先于下方阶段快照）
+
+- 当前平台开发仅在 `feat/ixd-platform-v1`，起点为 `37cfd60142d79ada1bd473fa2ff791dd64122631`。`archive/ixd-beta-0.4` 与 `v0.4.0` 是同一提交的只读视觉恢复基线，不在其上开发、不移动引用。不改 main、不写 upstream。
+- 用户已授权在一个仓库中增加真实 PostgreSQL、Fastify API、账号认证和独立后台。这覆盖下方“仅前端 Demo”与六方向一级主星的旧边界；原生前台、开场、Welcome、星门、银河/尾流、同一星体连续往返等视觉保护继续适用。
+- 一级六栏目为公告、赛事、项目、活动、学习、作品；六专业方向归入 CORE 二级星图，复用 renderer 与节点预设。不含签到、考勤或签到码。
+- `shared/platform.ts` 是请求字段、DTO 和状态契约；运营权威数据在 PostgreSQL。`src/data/club-content.ts` 仅作为幂等初始导入来源，不能启动时覆盖运营编辑。真实认证在 `server/src/auth.ts` 等模块，旧公开 Demo 账号不再可用。
+- `src/` 原生 TypeScript/Three.js；`admin/` 独立 React/Vite；`server/` 模块化单体；`shared/` 共享契约。先读 [PLATFORM_PLAN](docs/PLATFORM_PLAN.md)、[CONTENT_MODEL](docs/CONTENT_MODEL.md)、[PERMISSIONS](docs/PERMISSIONS.md)、[API](docs/API.md)，再改对应模块。
+- 已执行的 SQL 迁移不可修改；新变化追加编号迁移。测试须连接名称以 `_test` 结尾的专用库，采用自建随机 schema/受控时钟；不得清空未知数据库、修改系统时间或在生产 seed。
+- Cookie、CSRF、服务端字段白名单与每请求授权不得为方便演示而关闭。USER/EDITOR/ADMIN 与成员身份分开；范围外资源、私人附件、草稿必须在服务端过滤。用户/会话/邮件令牌的内部字段不能直接返回或进入日志。
+- 本地随机开发账号只保存在 `.local/development-accounts.json`；不将密码写入文档、源码、聊天或 Git。生产管理员通过 CLI 初始化/恢复，生产无 Demo 旁路或自动测试账号。
+- 按 M1～M6 连续完成；构建、测试脚本或截图不能替代真实 API/数据库/浏览器业务验收。记录未验证范围，不把核心功能降格为“预留接口”。
+- 本 Goal 允许阶段本地提交；最终完整验证后仅推送 `origin/feat/ixd-platform-v1`。推送前检查自动部署配置；不公开部署、不购服务器、不改 DNS、不创建 upstream PR。
+- `node_modules`、`dist`、`admin/dist`、`server/dist`、`.local`、`.tools`、凭据、数据库、上传、备份和参考视频不提交。旧文档的操作授权不自动继承。
+
+# IXD 星图开发约束（2026-09-21，历史阶段快照）
 
 - 当前用户为 Jc-augenstern，本次仓库为其 Fork，开发分支 feat/ixd-star-map-redesign。
 - zwh087383/rine-webui-ixd 仅作为只读 upstream；绝对禁止 push、改分支、改 Settings 或创建 PR。历史记录中的其他用户授权不适用于当前任务。

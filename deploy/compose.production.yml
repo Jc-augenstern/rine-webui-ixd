@@ -1,0 +1,71 @@
+name: ixd-platform-production
+x-logging: &logging
+  driver: json-file
+  options: { max-size: "10m", max-file: "5" }
+services:
+  db:
+    image: postgres:17.11-bookworm
+    environment:
+      POSTGRES_USER: ixd_database_owner
+      POSTGRES_PASSWORD: ${POSTGRES_ADMIN_PASSWORD:?Set POSTGRES_ADMIN_PASSWORD}
+      POSTGRES_DB: postgres
+      POSTGRES_APP_DB: ixd_platform
+      POSTGRES_APP_PASSWORD: ${POSTGRES_APP_PASSWORD:?Set POSTGRES_APP_PASSWORD}
+      POSTGRES_INITDB_ARGS: --auth-host=scram-sha-256 --data-checksums
+    volumes:
+      - database:/var/lib/postgresql/data
+      - ./init-postgres.sh:/docker-entrypoint-initdb.d/10-ixd.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ixd_database_owner -d postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    networks: [database]
+    restart: unless-stopped
+    logging: *logging
+  api:
+    build: { context: .., dockerfile: deploy/Dockerfile, target: api }
+    environment:
+      NODE_ENV: production
+      IXD_ROOT: /app
+      HOST: 0.0.0.0
+      PORT: "3000"
+      DATABASE_URL: postgresql://ixd_platform:${POSTGRES_APP_PASSWORD:?Set POSTGRES_APP_PASSWORD}@db:5432/ixd_platform
+      SESSION_SECRET: ${SESSION_SECRET:?Set SESSION_SECRET}
+      APP_PUBLIC_URL: https://${IXD_DOMAIN:?Set IXD_DOMAIN}
+      ADMIN_PUBLIC_URL: https://${IXD_DOMAIN:?Set IXD_DOMAIN}
+      TRUST_PROXY_CIDR: 172.30.42.2/32
+      STORAGE_PATH: /data/uploads
+      SMTP_HOST: ${SMTP_HOST:?Set a real SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_SECURE: ${SMTP_SECURE:-0}
+      SMTP_USER: ${SMTP_USER:?Set SMTP_USER}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:?Set SMTP_PASSWORD}
+      SMTP_FROM: ${SMTP_FROM:?Set SMTP_FROM}
+    volumes: ["uploads:/data/uploads", "private:/data/private"]
+    depends_on: { db: { condition: service_healthy } }
+    networks: { database: {}, web: { ipv4_address: 172.30.42.3 } }
+    restart: unless-stopped
+    logging: *logging
+  web:
+    build: { context: .., dockerfile: deploy/Dockerfile, target: web }
+    environment: { IXD_DOMAIN: "${IXD_DOMAIN:?Set IXD_DOMAIN}" }
+    ports: ["${HTTP_BIND:-0.0.0.0}:80:80", "${HTTPS_BIND:-0.0.0.0}:443:443"]
+    volumes: ["${TLS_DIRECTORY:?Set TLS_DIRECTORY}:/etc/nginx/tls:ro"]
+    depends_on: { api: { condition: service_healthy } }
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1/healthz"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
+    networks: { web: { ipv4_address: 172.30.42.2 } }
+    restart: unless-stopped
+    logging: *logging
+volumes:
+  database:
+  uploads:
+  private:
+networks:
+  database: { internal: true }
+  web:
+    ipam: { config: [{ subnet: 172.30.42.0/24 }] }

@@ -17,7 +17,7 @@ export default defineConfig(({ mode }) => ({
   optimizeDeps: { entries: ["index.html"] },
   // Verification videos can be exclusively locked on Windows. Local test
   // artifacts and their helper packages are not application source files.
-  server: { watch: { ignored: ["**/.tools/**"] } },
+  server: { watch: { ignored: ["**/.tools/**", "**/server/**", "**/admin/**", "**/.local/**"] }, proxy: { '/api': { target: process.env.IXD_API_PROXY ?? 'http://127.0.0.1:3000', changeOrigin: false } } },
   base: mode === "wallpaper" ? "./" : "/",
   define: {
     __RHINE_MODELS__: JSON.stringify(Object.fromEntries(models.map(model => [model.key,model.fileName]))),

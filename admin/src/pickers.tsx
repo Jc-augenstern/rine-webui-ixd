@@ -1,0 +1,26 @@
+import { useEffect, useRef, useState } from 'react';
+import type { AdminContentDTO, ContentKind, MediaDTO } from '../../shared/platform';
+import { api, message, query } from './api';
+import { Notice } from './common';
+
+export function MediaPicker({ value, onChange, single = false, images = false }: { value: string[]; onChange: (ids: string[]) => void; single?: boolean; images?: boolean }) {
+  const [items, setItems] = useState<MediaDTO[]>([]), [search, setSearch] = useState(''), [error, setError] = useState(''), [open, setOpen] = useState(false), [busy, setBusy] = useState(false), [access, setAccess] = useState('PUBLIC');
+  const requestVersion = useRef(0);
+  const load = async () => { const version = ++requestVersion.current; try { const result = await api<MediaDTO[]>(`/admin/media?${query({ pageSize: 100, q: search })}`); if (version !== requestVersion.current) return; setItems(result.data); setError(''); } catch (e) { if (version === requestVersion.current) setError(message(e)); } };
+  useEffect(() => { void load(); return () => { requestVersion.current++; }; }, []);
+  const upload = async (file?: File) => {
+    if (!file) return; setBusy(true); setError('');
+    try { const body = new FormData(); body.append('accessLevel', access); body.append('file', file); const { data } = await api<MediaDTO>('/media', { method: 'POST', body }); requestVersion.current++; setItems(v => [data, ...v.filter(item => item.id !== data.id)]); onChange(single ? [data.id] : [...new Set([...value, data.id])]); }
+    catch (e) { setError(message(e)); } finally { setBusy(false); }
+  };
+  return <div className="picker"><ul className="selected-items">{value.map(id => { const item = items.find(m => m.id === id); return <li key={id}>{item ? <a href={item.url} target="_blank" rel="noreferrer">{item.originalName}</a> : <span>已关联附件 · {id.slice(0, 8)}</span>}<button type="button" className="quiet" onClick={() => onChange(value.filter(v => v !== id))}>移除引用</button></li>; })}</ul><button type="button" onClick={() => setOpen(!open)}>{open ? '收起媒体选择' : single && value.length ? '替换图片 / 附件' : '选择或上传附件'}</button>{open && <div className="picker-panel"><Notice error={error}/><div className="toolbar"><input aria-label="搜索媒体名称" value={search} onChange={e => setSearch(e.target.value)} placeholder="搜索文件名"/><button type="button" onClick={() => void load()}>搜索</button></div><div className="media-options">{items.filter(m => !images || m.mimeType.startsWith('image/')).map(item => <label key={item.id}><input type={single ? 'radio' : 'checkbox'} checked={value.includes(item.id)} onChange={e => onChange(single ? [item.id] : e.target.checked ? [...value, item.id] : value.filter(v => v !== item.id))}/>{item.originalName}<small>{item.accessLevel === 'PUBLIC' ? '公开附件' : '受限附件'} · {Math.ceil(item.byteSize / 1024)} KB</small></label>)}</div>{!items.length && <p className="muted">暂无可选媒体，可上传新文件。</p>}<div className="upload-line"><select aria-label="上传附件可见范围" value={access} onChange={e => setAccess(e.target.value)}><option value="PUBLIC">公开素材</option><option value="PRIVATE">受限附件</option></select><input aria-label="上传附件" type="file" disabled={busy} accept={images ? 'image/png,image/jpeg,image/webp' : 'image/png,image/jpeg,image/webp,application/pdf,text/plain'} onChange={e => { void upload(e.target.files?.[0]); e.target.value = ''; }}/>{busy && <span>正在上传…</span>}</div><small>仅支持安全图片、PDF、纯文本。服务器校验内容与权限；移除引用后需保存。已发布旧版本的引用继续保护原附件。</small></div>}</div>;
+}
+
+export function ContentPicker({ value, onChange, single = false, kind }: { value: string[]; onChange: (ids: string[]) => void; single?: boolean; kind?: ContentKind }) {
+  const [items, setItems] = useState<AdminContentDTO[]>([]), [search, setSearch] = useState(''), [error, setError] = useState('');
+  const requestVersion = useRef(0);
+  const load = async () => { const version = ++requestVersion.current; try { const { data } = await api<AdminContentDTO[]>(`/admin/contents?${query({ pageSize: 100, q: search, kind })}`); if (version !== requestVersion.current) return; setItems(data); setError(''); } catch (e) { if (version === requestVersion.current) setError(message(e)); } };
+  // A late response for the old kind/search must not replace the current choices.
+  useEffect(() => { setItems([]); setError(''); void load(); return () => { requestVersion.current++; }; }, [kind]);
+  return <div className="picker"><Notice error={error}/><ul className="selected-items">{value.map(id => <li key={id}><span>{items.find(item => item.id === id)?.payload.title ?? `已关联内容 · ${id.slice(0, 8)}`}</span><button type="button" className="quiet" onClick={() => onChange(value.filter(v => v !== id))}>移除</button></li>)}</ul><div className="toolbar"><input aria-label="搜索关联内容" placeholder="输入标题搜索可管理内容" value={search} onChange={e => setSearch(e.target.value)}/><button type="button" onClick={() => void load()}>查找</button><select aria-label="选择关联内容" value="" onChange={e => { if (e.target.value) onChange(single ? [e.target.value] : [...new Set([...value, e.target.value])]); }}><option value="">选择内容…</option>{items.filter(item => !value.includes(item.id)).map(item => <option key={item.id} value={item.id}>{item.payload.title}</option>)}</select></div></div>;
+}

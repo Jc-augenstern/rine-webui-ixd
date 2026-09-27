@@ -4,6 +4,7 @@
   "license": "MIT",
   "private": true,
   "type": "module",
+  "workspaces": ["server", "admin"],
   "scripts": {
     "postinstall": "node scripts/patch-rolling-number.mjs",
     "predev": "node scripts/patch-rolling-number.mjs && node scripts/export-records.mjs",
@@ -19,11 +20,31 @@
     "build:cloudflare": "npm run build && node scripts/package-cloudflare.mjs",
     "build:wallpaper": "node scripts/patch-rolling-number.mjs && node scripts/export-records.mjs && tsc && vite build --mode wallpaper --outDir release/wallpaper && node scripts/build-wallpaper.mjs",
     "format": "prettier --write src scripts index.html package.json tsconfig.json",
-    "preview": "vite preview --host 127.0.0.1"
+    "preview": "vite preview --host 127.0.0.1",
+    "dev:api": "npm run dev --workspace @ixd/server",
+    "dev:admin": "npm run dev --workspace @ixd/admin",
+    "build:api": "npm run build --workspace @ixd/server",
+    "build:admin": "npm run build --workspace @ixd/admin",
+    "build:all": "npm run build && npm run build:api && npm run build:admin",
+    "db:migrate": "npm run migrate --workspace @ixd/server",
+    "db:seed": "npm run seed:dev --workspace @ixd/server",
+    "admin:init": "npm run admin:init --workspace @ixd/server --",
+    "test:platform": "npm run test --workspace @ixd/server",
+    "check:cache": "node --test scripts/check-platform-cache.mjs",
+    "env:check": "node scripts/platform-check.mjs",
+    "env:setup": "node scripts/platform-runtime.mjs setup",
+    "platform:start": "node scripts/platform-services.mjs start",
+    "platform:stop": "node scripts/platform-services.mjs stop",
+    "platform:status": "node scripts/platform-services.mjs status",
+    "backup:local": "node scripts/platform-backup.mjs backup",
+    "restore:local": "node scripts/platform-backup.mjs restore",
+    "admin:recover": "npm run admin:recover --workspace @ixd/server --",
+    "content:import": "npm run content:import --workspace @ixd/server --"
   },
   "dependencies": {
     "@kitlangton/rolling-number": "0.4.1",
-    "three": "^0.183.0"
+    "three": "^0.183.0",
+    "zod": "4.6.5"
   },
   "devDependencies": {
     "@types/three": "^0.183.0",

@@ -11,6 +11,10 @@ export interface StarMapUIOptions {
   onReplay: () => void;
   onSound: () => void;
   reduced: boolean;
+  onContentOpen?: (id: string, host: HTMLElement) => void;
+  onContentClose?: () => void;
+  onLevelChange?: (level: 'main' | 'directions') => void;
+  canClose?: () => boolean;
 }
 
 type GlyphGeometry = { x: number; y: number; size: number };
@@ -50,6 +54,7 @@ export class StarMapUI {
   private glyphHome: HTMLElement | null = null;
   private activeGlyph: HTMLElement | null = null;
   private pointer = { x: 0, y: 0, targetX: 0, targetY: 0 };
+  private level: 'main' | 'directions' = 'main';
 
   constructor(host: HTMLElement, options: StarMapUIOptions) {
     this.options = options;
@@ -65,6 +70,8 @@ export class StarMapUI {
           <div class="sm-system-brand"><span class="sm-mark" aria-hidden="true">${ixdMark("star-map-mark")}</span><span>IXD <b>ANALYSIS OS</b></span></div>
           <p class="sm-system-state"><i></i>星图已连接 <span> / SYSTEM ONLINE</span></p>
         </header>
+        <button class="sm-level-back" type="button" data-action="main-level" hidden>← 返回一级星图</button>
+        <nav class="sm-direct" aria-label="栏目直达"><button data-star-direct="announcements">公告</button><button data-star-direct="competitions">赛事</button><button data-star-direct="projects">项目</button><button data-star-direct="events">活动</button><button data-star-direct="learning">学习</button><button data-star-direct="works">作品</button><button data-star-direct="core">社团</button><button data-star-direct="account">个人中心</button></nav>
         <div class="sm-field" role="group" aria-label="星图导航，点击星星探索；方向键切换星星">
           ${this.linesMarkup()}
           <div class="sm-intro">
@@ -78,7 +85,7 @@ export class StarMapUI {
           <div class="sm-map-coordinates" aria-hidden="true">IXD CONSTELLATION<br>R.A. 20h 26m &nbsp; DEC. +06°</div>
         </div>
         <section class="sm-growth" aria-label="成长星轨，社团培养路径">
-          <div class="sm-growth-heading"><h2>成长星轨</h2><p>每一次探索，点亮下一程</p><span data-explored-count>00 / 12 已探索</span></div>
+          <div class="sm-growth-heading"><h2>成长星轨</h2><p>每一次探索，点亮下一程</p><span data-explored-count>00 / ${starMap.filter(star => star.enabled).length} 已探索</span></div>
           <div class="sm-growth-track">
             <svg viewBox="0 0 1000 42" preserveAspectRatio="none" aria-hidden="true"><path d="M25 32 C210 32 180 5 370 5 S650 42 780 27 S910 9 975 16"/></svg>
             ${growthSteps.map((step, index) => `<button class="sm-growth-stop" style="--stop:${index};--step-y:${[31, 20, 6, 18, 28, 16][index]}px" type="button" data-growth="${index}" aria-label="成长星轨：${escape(step.title)}"><i></i><span>${escape(step.title)}</span></button>`).join("")}
@@ -86,8 +93,8 @@ export class StarMapUI {
           <p class="sm-growth-note">星轨点亮记录本次浏览，培养路径以学年循环。</p>
         </section>
         <footer class="sm-footer">
-          <div class="sm-legend"><span><i class="sm-legend-main"></i>专业方向</span><span><i></i>社团节点</span><span class="sm-legend-unexplored"><i></i>未探索空间</span></div>
-          <div class="sm-tools"><button type="button" data-action="settings">画质与设置</button><button type="button" data-action="sound" aria-pressed="false">声音 <span data-sound-label>关</span></button><button type="button" data-action="replay">重新登录 <span aria-hidden="true">↗</span></button></div>
+          <div class="sm-legend"><span><i class="sm-legend-main"></i>平台栏目</span><span><i></i>社团节点</span><span class="sm-legend-unexplored"><i></i>未探索空间</span></div>
+          <div class="sm-tools"><button type="button" data-action="settings">画质与设置</button><button type="button" data-action="sound" aria-pressed="false">声音 <span data-sound-label>关</span></button><button type="button" data-action="replay">重播开场 <span aria-hidden="true">↗</span></button></div>
         </footer>
       </div>
       <section class="sm-modal" role="dialog" aria-modal="true" aria-labelledby="sm-detail-title" tabindex="-1" hidden>
@@ -116,6 +123,7 @@ export class StarMapUI {
       return { element, start, opacity: element.classList.contains("sm-constellation") ? .75 : 1 };
     });
     this.setReduced(options.reduced);
+    this.setLevel('main');
     const { signal } = this.controller;
     this.element.addEventListener("click", this.onClick, { signal });
     this.element.addEventListener("keydown", this.onKeyDown, { signal });
@@ -135,7 +143,7 @@ export class StarMapUI {
     this.element.scrollTop = 0;
     this.home.inert = false;
     this.element.classList.add("is-visible");
-    const hashId = location.hash.match(/^#star\/([a-z-]+)$/)?.[1];
+    const hashId = !this.options.onContentOpen && location.hash.match(/^#star\/([a-z-]+)$/)?.[1];
     if (hashId && starMap.some((star) => star.id === hashId && star.enabled)) {
       this.priorHash = "";
       this.openStar(hashId);
@@ -175,6 +183,57 @@ export class StarMapUI {
   }
 
   focusHome() { this.home.querySelector<HTMLElement>('[data-star="core"]')?.focus({ preventScroll: true }); }
+
+  get activeStar() { return this.modal.dataset.activeStar ?? null; }
+  get detailHost() { return this.element.querySelector<HTMLElement>('.sm-detail-scroll')!; }
+  get currentLevel() { return this.level; }
+  setConnection(connected: boolean) {
+    this.home.querySelector<HTMLElement>('.sm-system-state')!.innerHTML = connected ? '<i></i>星图已连接 <span>/ SYSTEM ONLINE</span>' : '<i></i>平台连接暂不可用 <span>/ RETRY IN CONTENT</span>';
+  }
+  async navigateStar(id: string) {
+    if (this.activeStar === id && this.modalOpen) return true;
+    if (!this.modal.hidden) {
+      this.closeDetail();
+      await new Promise<void>(resolve => { const wait = () => this.modal.hidden ? resolve() : requestAnimationFrame(wait); wait(); });
+    }
+    return this.openStar(id);
+  }
+  setLevel(level: 'main' | 'directions') {
+    this.level = level; this.element.dataset.level = level;
+    this.home.querySelectorAll<HTMLElement>('[data-star]').forEach(node => {
+      const star = starMap.find(star => star.id === node.dataset.star)!;
+      node.hidden = level === 'directions' ? star.type !== 'direction' : star.type === 'direction';
+    });
+    this.element.querySelector<HTMLElement>('.sm-level-back')!.hidden = level === 'main';
+    this.element.querySelector<HTMLElement>('.sm-constellation')!.style.visibility = level === 'directions' ? 'visible' : 'hidden';
+    this.home.querySelector<HTMLElement>('.sm-kicker')!.textContent = level === 'directions' ? 'IXD / 六方向二级星图' : 'IXD STAR MAP / PLATFORM';
+  }
+  updateSite(settings: { siteName: string; tagline: string; nodes: { routeKey: string; title: string; subtitle: string; enabled: boolean; visualPreset: string }[] }) {
+    this.home.querySelector<HTMLElement>('.sm-intro h1')!.textContent = settings.siteName;
+    this.home.querySelector<HTMLElement>('.sm-motto')!.textContent = settings.tagline;
+    for (const config of settings.nodes) {
+      const node = this.home.querySelector<HTMLButtonElement>(`[data-star="${config.routeKey}"]`);
+      if (!node) continue;
+      node.disabled = !config.enabled;
+      node.dataset.displayTitle = config.title;
+      node.dataset.displaySubtitle = config.subtitle;
+      node.setAttribute('aria-label', `${config.title}，打开详情`);
+      const label = node.querySelector<HTMLElement>('.sm-star-label')!;
+      label.firstChild!.textContent = config.title;
+      node.querySelector<HTMLElement>('.sm-star-meta')!.textContent = config.subtitle;
+      const direct = this.home.querySelector<HTMLButtonElement>(`[data-star-direct="${config.routeKey}"]`);
+      if (direct) { direct.textContent = config.title; direct.disabled = !config.enabled; }
+      // Preset changes are applied only to resting artwork, never a star in flight.
+      const model = starMap.find(star => star.id === config.routeKey)!;
+      if (this.activeStar !== config.routeKey && node.dataset.visualPreset !== config.visualPreset) {
+        const preset = starMap.find(star => star.visualPreset === config.visualPreset);
+        if (preset) {
+          node.querySelector('.sm-star-glyph')!.innerHTML = galaxyGlyph({ ...model, visualPreset: preset.visualPreset, motionPreset: preset.motionPreset });
+          node.dataset.visualPreset = preset.visualPreset;
+        }
+      }
+    }
+  }
 
   setReduced(reduced: boolean) {
     this.reduced = reduced;
@@ -232,19 +291,23 @@ export class StarMapUI {
     const star = starMap.find((node) => node.id === id);
     if (!star?.enabled || !star.content) return false;
     const button = this.element.querySelector<HTMLElement>(`[data-star="${star.id}"]`)!;
+    if ((button as HTMLButtonElement).disabled) return false;
+    this.setLevel(star.type === 'direction' ? 'directions' : 'main');
     this.returnFocus = button;
     this.home.querySelectorAll(".is-selected").forEach((node) => node.classList.remove("is-selected"));
     button.classList.add("is-selected");
     button.setAttribute("aria-expanded", "true");
     this.explored.add(id);
     this.updateExploration();
-    this.renderDetail(star.title, star.content, star.number ? `DIRECTION ${star.number}` : star.subtitle, star.type === "direction");
+    this.renderDetail(button.dataset.displayTitle ?? star.title, star.content, star.number ? `DIRECTION ${star.number}` : button.dataset.displaySubtitle ?? star.subtitle, star.type === "direction");
     this.modal.dataset.activeStar = id;
     this.enterDetail(button, star.route);
+    this.options.onContentOpen?.(id, this.detailHost);
     return true;
   }
 
   closeDetail(restoreFocus = true) {
+    if (this.modalOpen && restoreFocus && this.options.canClose && !this.options.canClose()) return;
     // Repeated Escape during flight/exit must not restart or cancel its cleanup.
     if (!this.modalOpen) {
       if (!restoreFocus) {
@@ -253,6 +316,7 @@ export class StarMapUI {
       return;
     }
     this.modalOpen = false;
+    this.options.onContentClose?.();
     this.modal.classList.remove("is-ready");
     this.modal.dataset.journey = "leaving";
     this.terminal.inert = true;
@@ -332,7 +396,7 @@ export class StarMapUI {
   }
 
   private enterDetail(origin: HTMLElement, route: string | null) {
-    if (route) {
+    if (route && !this.options.onContentOpen) {
       this.priorHash = location.hash.startsWith("#star/") ? "" : location.hash;
       history.replaceState(history.state, "", location.pathname + location.search + route);
     }
@@ -426,6 +490,7 @@ export class StarMapUI {
   };
 
   private openGrowth(index: number, origin: HTMLElement) {
+    if (this.options.onContentOpen) { if (this.openStar('learning')) this.options.onContentOpen('learning-paths', this.detailHost); return; }
     if (!this.modal.hidden || !growthSteps[index]) return;
     const step = growthSteps[index];
     this.returnFocus = origin;
@@ -451,6 +516,7 @@ export class StarMapUI {
   }
 
   private restoreRoute() {
+    if (this.options.onContentOpen) return;
     if (location.hash.startsWith("#star/")) history.replaceState(history.state, "", location.pathname + location.search + this.priorHash);
   }
 
@@ -463,10 +529,13 @@ export class StarMapUI {
       else if (action === "settings") this.options.onSettings();
       else if (action === "sound") this.options.onSound();
       else if (action === "replay") this.options.onReplay();
+      else if (action === 'main-level') { this.setLevel('main'); this.options.onLevelChange?.('main'); }
       return;
     }
     const star = target.closest<HTMLElement>("[data-star]");
     if (star) { event.stopPropagation(); this.openStar(star.dataset.star!); return; }
+    const direct = target.closest<HTMLElement>('[data-star-direct]');
+    if (direct) { event.stopPropagation(); this.openStar(direct.dataset.starDirect!); return; }
     const growth = target.closest<HTMLElement>("[data-growth]");
     if (growth) { event.stopPropagation(); this.openGrowth(Number(growth.dataset.growth), growth); }
   };
@@ -478,7 +547,7 @@ export class StarMapUI {
       if (event.key === "Escape") { event.preventDefault(); this.closeDetail(); }
       if (event.key === "Tab") {
         if (!this.modal.classList.contains("is-ready")) { event.preventDefault(); return; }
-        const stops = [...this.terminal.querySelectorAll<HTMLElement>('button:not([disabled]), a[href], [tabindex="0"]')];
+        const stops = [...this.terminal.querySelectorAll<HTMLElement>('button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex="0"]')].filter(el => el.getClientRects().length > 0 && !el.closest('[inert]'));
         const first = stops[0], last = stops[stops.length - 1];
         const current = document.activeElement;
         if (event.shiftKey && (current === first || !this.terminal.contains(current))) { event.preventDefault(); last?.focus(); }
@@ -493,7 +562,7 @@ export class StarMapUI {
     const horizontal = event.key === "ArrowLeft" || event.key === "ArrowRight";
     const sign = event.key === "ArrowRight" || event.key === "ArrowDown" ? 1 : -1;
     const rect = origin.getBoundingClientRect();
-    const candidates = [...this.home.querySelectorAll<HTMLElement>("[data-star]")].filter((node) => node !== origin).map((node) => {
+    const candidates = [...this.home.querySelectorAll<HTMLElement>("[data-star]")].filter((node) => node !== origin && !node.hidden && !(node as HTMLButtonElement).disabled).map((node) => {
       const other = node.getBoundingClientRect();
       const primary = (horizontal ? other.left - rect.left : other.top - rect.top) * sign;
       const secondary = Math.abs(horizontal ? other.top - rect.top : other.left - rect.left);

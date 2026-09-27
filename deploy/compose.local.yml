@@ -1,0 +1,35 @@
+name: ixd-platform-local
+services:
+  db:
+    image: postgres:17.11-bookworm
+    environment:
+      POSTGRES_USER: ixd_local_admin
+      POSTGRES_PASSWORD: ${POSTGRES_ADMIN_PASSWORD:?Set POSTGRES_ADMIN_PASSWORD}
+      POSTGRES_DB: postgres
+      POSTGRES_APP_PASSWORD: ${POSTGRES_APP_PASSWORD:?Set POSTGRES_APP_PASSWORD}
+      POSTGRES_APP_DB: ixd_platform_dev
+      POSTGRES_INITDB_ARGS: --auth-host=scram-sha-256 --data-checksums
+      IXD_CREATE_TEST_DB: "1"
+    ports: ["127.0.0.1:${PG_HOST_PORT:-5433}:5432"]
+    volumes:
+      - local_database:/var/lib/postgresql/data
+      - ./init-postgres.sh:/docker-entrypoint-initdb.d/10-ixd.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ixd_local_admin -d postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    restart: unless-stopped
+  mailpit:
+    image: axllent/mailpit:v1.31.2
+    environment:
+      MP_DATABASE: /data/mailpit.db
+      MP_MAX_MESSAGES: "1000"
+      MP_ALLOWED_HOSTS: 127.0.0.1,localhost
+      MP_DISABLE_VERSION_CHECK: "true"
+    ports: ["127.0.0.1:1025:1025", "127.0.0.1:8025:8025"]
+    volumes: ["local_mail:/data"]
+    restart: unless-stopped
+volumes:
+  local_database:
+  local_mail:
