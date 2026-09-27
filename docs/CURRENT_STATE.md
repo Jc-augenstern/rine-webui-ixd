@@ -1,76 +1,66 @@
 # IXD Current State
 
-**核对日期：2026-09-27（Asia/Shanghai）。平台开发进行中，尚未最终交付。**
+核对日期：2026-09-27（Asia/Shanghai）。本地 M1～M6 实现与23项验收已完成，正式服务器部署准备已交付。当前结果以 [PLATFORM_VERIFICATION](PLATFORM_VERIFICATION.md) 和实时 Git/运行状态为准；长期原则见 [IXD_SPEC](IXD_SPEC.md)，接手规则见 [AGENTS](../AGENTS.md)。
 
-本文件描述当前平台工作区，不能用旧视觉版报告代替平台验收。长期规范见 [IXD_SPEC](IXD_SPEC.md)，开发边界见 [AGENTS](../AGENTS.md)，完整验收账本见 [PLATFORM_PLAN](PLATFORM_PLAN.md)。2026-09-23 的原视觉状态可从只读 v0.4.0 标签恢复。
+## 1. 仓库、分支和恢复基线
 
-## 1. 分支与恢复基线
+- 用户仓库：Jc-augenstern/rine-webui-ixd；唯一平台分支：feat/ixd-platform-v1。
+- 平台实现提交：6b6b783；通知权限补丁：dc4f456。最终交付文档提交见本分支历史；不改 main。
+- 起点及只读 archive/ixd-beta-0.4、v0.4.0 的 peeled commit 均为 37cfd60142d79ada1bd473fa2ff791dd64122631，封存引用未移动。
+- origin 为用户 Fork；zwh087383/rine-webui-ixd 仅为只读 upstream，push URL 故意无效，并保留 pre-push 目标保护。
+- 本轮不公开部署，不购买服务器或修改 DNS。旧视觉归档不包含平台数据库，也不能替代备份。
 
-- 仓库：Jc-augenstern/rine-webui-ixd；当前分支：feat/ixd-platform-v1。
-- 平台分支起点、archive/ixd-beta-0.4、v0.4.0 均为 37cfd60142d79ada1bd473fa2ff791dd64122631。封存引用不动，main 不改。
-- origin 是用户 Fork；zwh087383/rine-webui-ixd 只读 upstream，push URL 为故意无效地址，pre-push hook 限定写入目标。
-- 当前功能改动尚未完成最终验证和推送；实时 Git 状态优先于本文。
+## 2. 实际完成的能力
 
-## 2. 当前代码与实际能力
+| 层 | 实现与数据来源 |
+| --- | --- |
+| 星图前台 | 原生 TypeScript/Three.js；六业务主星、CORE 六方向二级图、直接列表/详情链接、搜索筛选分页及个人中心。复用原 renderer，运营内容读真实 API。 |
+| 登录 | 注册、SMTP 邮箱验证、真实登录、退出、会话恢复、改密/重置、停用限制；原登录视觉、授权/Welcome/星门保留，访客可读公开内容。 |
+| 独立后台 | React/Vite 独立入口/构建，无银河音频；九种内容类型、专属表单、媒体选择/引用、用户/授权、申请成员/报名、站点设置与审计。 |
+| 内容发布 | 不可变版本、草稿/公开/定时版本隔离、预览、发布、撤回、归档、引用保护删除和乐观锁。后台发布无需 build 即被前台后续读取。 |
+| 用户协作 | 真实收藏/提醒、公告已读、参赛意向、项目申请/审批/撤回/成员、活动报名/取消、投稿审核和站内通知。并发名额由 PostgreSQL 事务控制。 |
+| 认证授权 | Argon2id、HttpOnly Cookie、CSRF/Origin/限流、服务端会话版本与墓碑撤销；USER/EDITOR/ADMIN、方向/资源/动作/字段授权及独立成员身份。 |
+| 存储与任务 | 配置化持久 LocalStorage，图片内容清理、受限静态 PDF/TXT、私有下载和历史引用保护；数据库持久任务含重试、租约、去重及附件删除 outbox。 |
+| 运维 | 本机 PostgreSQL/Mailpit，完整启动/停止/健康检查、生产 CLI 初始化/恢复、Compose/Nginx 配置及真实独立备份恢复。 |
 
-| 层 | 当前实现 | 验证边界 |
-| --- | --- | --- |
-| 原生星图前台 | 真实 API/CSRF 会话适配，注册/访客/恢复/邮箱链接；六业务栏目、CORE 二级方向、个人资料/收藏/申请/报名/投稿/通知 | TypeScript 与迁移后的认证测试通过；真实浏览器全链路、视觉回归进行中 |
-| 独立后台 | React/Vite 中文侧栏、九种内容编辑表单、日期精度、岗位/路线、媒体、用户授权、申请/报名、配置、日志 | 独立构建与首轮 21 项真实 UI 检查通过；尚待全项验收 |
-| API | Fastify 模块化认证、授权、内容、协作、任务、媒体、用户和审计 | 构建通过；真实 PostgreSQL 集成测试持续补充与复跑 |
-| 数据库 | pg 参数化 SQL、版本化迁移；内容草稿/公开/计划版本、会话、邮箱令牌、用户行为、通知、附件引用、审计 | 开发库与专用测试库真实迁移、幂等复跑；未使用浏览器 Mock 后端 |
-| 认证 | Argon2id、HttpOnly Cookie、CSRF、Origin、限流、邮件一次性令牌、会话墓碑与 auth_version 撤销 | 注册/验证/重置/密码变更/注销、拒绝越权、并发最后管理员等真实数据库测试通过 |
-| 附件 | 持久本地 Storage；PNG/JPEG/WebP、受限静态 PDF、UTF-8 TXT；私有访问与版本引用保护 | 实际字节上传、类型/主动内容拒绝、下载隔离与引用保护测试通过 |
-| 运维 | 便携 PostgreSQL/Mailpit 运行；正式一键启动/备份/部署脚本正在形成 | 尚未完成干净环境、独立恢复、生产环境验收；未公开部署 |
+六类业务内容全部由后台维护；方向、路线、社团介绍、加入方式、联系文案、站点节点名称/开关/预设同样写入数据库。没有签到、考勤、签到码或相关数据库结构。
 
-没有签到、考勤、签到码或签到表。生产部署、真实 SMTP 与管理员二次认证等上线加固不以本地测试结果冒充已上线。
+旧固定 Demo 认证已删除。账户、内容、业务行为、会话、令牌哈希、任务、通知、媒体引用、版本和审计都在 PostgreSQL；附件字节在持久目录。后台角色、兴趣方向、社团成员身份互不自动提升。私人业务历史及通知不会授予已撤销的关联内容权限。
 
-## 3. 本机运行与测试身份
-
-当前实际地址：
+## 3. 当前本机入口与操作
 
 - 前台：[http://127.0.0.1:5173/](http://127.0.0.1:5173/)
 - 后台：[http://127.0.0.1:5174/admin/](http://127.0.0.1:5174/admin/)
-- API 健康检查：[http://127.0.0.1:3000/api/v1/health](http://127.0.0.1:3000/api/v1/health)
-- 测试收件箱：[http://127.0.0.1:8025/](http://127.0.0.1:8025/)
+- API：[http://127.0.0.1:3000/api/v1/health](http://127.0.0.1:3000/api/v1/health)
+- 本地测试收件箱：[http://127.0.0.1:8025/](http://127.0.0.1:8025/)
 
-前后台都通过开发代理访问同一 API，统一使用 127.0.0.1。数据库本机端口 5433，SMTP 本机端口 1025。不要随意终止占用端口的其他项目。
+浏览器统一用 127.0.0.1；前后台代理同一 API，未开放任意来源凭据 CORS。数据库与 SMTP 仅本机绑定 5433/1025。实际地址以启动健康检查为准。
 
-开发随机 ADMIN / 受限 EDITOR / USER 的凭据位于仓库内被 Git 忽略的 [.local/development-accounts.json](../.local/development-accounts.json)，仅本机读取。旧 ixd-demo 固定账号已移除，不能绕过真实认证。访问前台后保留原开场与登录视觉，成功认证接续 Welcome/星门；公开内容可选访客进入。
+开发三类随机身份只保存在本机被忽略的 [.local/development-accounts.json](../.local/development-accounts.json)。在编辑器查看 accounts 中 ADMIN/EDITOR/USER 的用户名和密码；不要把密码复制进公开文档、聊天或 Git。前台开场后进入原登录界面，后台地址直接显示独立登录页。注册/重置邮件到测试收件箱，不向真实用户发开发邮件。
 
-当前已可运行的命令：npm run db:migrate、npm run db:seed、npm run dev、npm run dev:api、npm run dev:admin、npm run test:platform、npm run build:all。迁移只加结构，开发 seed 幂等，不覆盖管理员后续编辑。正式单命令启动及完整 README 正在验收前完善。
+首次运行按 [LOCAL_SETUP](LOCAL_SETUP.md)：npm ci → env:check → env:setup → db:migrate → db:seed → platform:start。日常 npm run platform:start / platform:status / platform:stop；停止保留全部数据，只操作确认属于本控制器的进程。全套停止/重启已实测。
 
-本地注册和重置邮件发送到 Mailpit，在收件箱打开对应邮件链接。接口不返回验证/重置令牌；生产配置拒绝本地测试 SMTP 和开发种子。
+npm run dev 仍启动前台热更新；npm run dev:api / dev:admin 可独立开发。总控制器的 API 不自动 watch，后端源码修改后重启；不要同时占用同一端口。npm run build 生成 dist，build:all 另生成 admin/dist 和 server/dist。
 
-## 4. 模块入口
+## 4. 验证与局限
 
-| 范围 | 入口 |
-| --- | --- |
-| 平台前台 API、路由与业务 UI | src/platform/、src/auth/、src/ixd-experience.ts、src/ui/star-map-ui.ts |
-| 保留视觉渲染 | src/galaxy/、src/boot.ts、src/ui/ixd-portal.ts、src/ui/galaxy-glyph.ts |
-| 后台 | admin/src/、admin/vite.config.ts；独立 admin/dist |
-| API 注册和进程 | server/src/app.ts、index.ts、config.ts |
-| 认证和权限 | auth.ts、mail.ts、session-store.ts、security.ts、users.ts |
-| 内容/业务/任务 | content.ts、content-responses.ts、business.ts、jobs.ts、content-notifications.ts |
-| 附件 | media.ts、storage.ts；文件在可配置持久目录，默认 .local/uploads |
-| 迁移/CLI/导入 | server/migrations/、db.ts、cli.ts、seed.ts |
-| 契约 | shared/platform.ts；字段、状态、DTO 与表单定义共同维护 |
-| 安全与业务验证 | server/test/；scripts/check-ixd-auth.mjs、check-platform-cache.mjs；真实浏览器证据 .tools/ |
-| 运维 | scripts/platform-*.mjs、deploy/；进度以文件和实测结果为准 |
+- 真实 PostgreSQL/SMTP 平台测试 22/22（含父测试）；前台认证 11/11、缓存保护、原内容 18/18、配色/视口及全部构建通过。
+- 后台真实表单覆盖六类内容、方向/路线/页面、附件、用户授权、冲突保留输入；跨角色公告发布、申请审批两条实际录屏在 .tools/platform-frontend-real/videos/。
+- 前台普通/深浅/手机/减少动态效果、全部栏目/个人中心、重新申请与方向关联闭环已通过。生产包 PWA 12 项通过，818 缓存项均为静态资源；退出/换账号/离线无私人数据，API 故障真实报错。
+- 修改前视觉基准保留在 .tools/platform-baseline。原开场、Welcome、星门、银河、尾流、glyph 和原 CSS 源未改写；平台接线变化已作独立比对。最终动态连续性175项、星体210项/26旅程、尾流32项及真实指针3项通过，见验收报告。
+- 真实 PostgreSQL 重启、22 表完整行摘要、5 个附件哈希及非空收藏持久性通过；恢复到独立新库/目录，未覆盖当前数据。
+- 干净目录安装、迁移、seed、全构建、独立三组件启动/登录通过；生产空库根目录 npm 管理员初始化、两次幂等导入、密码恢复也通过。
+- 本机无 Docker，容器配置仅静态/语法检查；真实 Linux/Docker、域名 TLS、外部 SMTP、真机 Safari/不同 GPU、大规模负载仍需上线环境验证。原较大视觉 bundle 和 34 MiB 静态 PWA 包的限制仍在。
 
-## 5. 验证和已知待办
+## 5. 后续接手与文档索引
 
-已完成 M1；M2 公告后台/API 纵向链路通过，前台跨 UI 视频正在验证。M3～M6 的代码持续集成，不能据此宣布全部完成。
+先读 AGENTS、IXD_SPEC、本文，再核对 Git、运行进程和 [PLATFORM_PLAN](PLATFORM_PLAN.md)。代码入口为 src/platform/、src/auth/、src/ixd-experience.ts、src/ui/star-map-ui.ts；后台 admin/src/；API server/src/；共享契约 shared/platform.ts；SQL 迁移 server/migrations/。
 
-- 修改前视觉基准在 .tools/platform-baseline：四段录屏、29 文件哈希、主题/移动/降级/星体与尾流回归。平台修改后的完整视觉比较仍待完成。
-- 独立后台首轮证据在 .tools/admin-ui-review；前台真 API 验证在 .tools/platform-frontend-real。测试数字可能随复跑变化，以结果文件及平台验收报告为准。
-- PWA 已显式绕过 API、后台、媒体及敏感查询参数；退出/换账号的实际生产 PWA 验收仍待完成。
-- 原 check:palette 浅色假设已迁移；PWA 初始颜色与原有默认深色统一。银河配色、运动参数没有因此改变。
-- 仍须完成全部 23 项最终验收，特别是生产 PWA、数据库进程重启、独立备份恢复、干净环境安装与全部视觉回归；完成前不推送最终成果。
-- 历史大 bundle、真实手机/Safari/GPU 覆盖不足仍需如实注明。本机桌面视口不能证明所有设备表现一致。
+- [CONTENT_MODEL](CONTENT_MODEL.md)：所有可编辑字段与前后台映射。
+- [API](API.md)、[PERMISSIONS](PERMISSIONS.md)：字段、状态、权限与错误契约。
+- [ADMIN_GUIDE](ADMIN_GUIDE.md)：发布、赛事时间、申请报名、用户、附件和密码恢复。
+- [DEPLOYMENT](DEPLOYMENT.md)：同域生产配置、环境变量、TLS/SMTP/密钥与人工上线检查。
+- [BACKUP_RESTORE](BACKUP_RESTORE.md)：数据库和上传同时备份、独立恢复、秘密单独保管。
+- [PLATFORM_VERIFICATION](PLATFORM_VERIFICATION.md)：23 项逐条证据、录屏、局限与交付审核。
 
-## 6. 接手顺序
-
-先读 AGENTS、IXD_SPEC、本文，再读 PLATFORM_PLAN/CONTENT_MODEL/API/PERMISSIONS；检查当前 Git、运行进程和相关源码。新工作继续此平台分支，不重新 clone、不从旧视觉版整目录覆盖。
-
-历史 BETA05/BETA04、GALAXY、DELIVERY、VERIFICATION、PWA 和原部署记录保留技术溯源价值；其中旧 Demo、旧主星导航、旧域名/推送授权不是平台当前规范。封存视觉 Tag 是代码恢复入口，不是数据库/附件备份；回滚代码必须另行评估迁移兼容和数据恢复。
+新增数据库结构必须追加迁移，禁止改写已执行迁移；幂等导入不覆盖运营编辑。新 checkout 执行 node scripts/setup-safe-remotes.mjs 恢复远程保护。当前平台分支继续开发，不重新覆盖旧视觉快照；历史 BETA/DELIVERY/部署文档中的 Demo、旧主星、域名和授权只作溯源。

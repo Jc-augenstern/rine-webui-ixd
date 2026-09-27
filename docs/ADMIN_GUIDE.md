@@ -10,6 +10,20 @@
 
 忘记密码可在登录页提交邮箱；开发环境到本地测试收件箱取重置邮件。正式首次管理员使用 `npm run admin:init`，失去管理员访问时使用 `npm run admin:recover`，需要服务器命令行权限。具体参数和生产前置条件见 [DEPLOYMENT.md](DEPLOYMENT.md)。不要直接修改数据库密码字段。
 
+已完成环境配置和迁移的源码环境，可在仓库根目录执行以下命令；将用户名和邮箱占位符替换为自己的信息：
+
+```powershell
+npm run admin:init -- --username YOUR_ADMIN --email YOUR_EMAIL --output .local/admin-first-access.json
+```
+
+忘记管理员密码且无法通过邮件恢复时，使用新文件名执行：
+
+```powershell
+npm run admin:recover -- --username YOUR_ADMIN --output .local/admin-recovery-UNIQUE.json
+```
+
+命令不接受密码参数，随机新密码只写入指定私有文件，登录后再修改。恢复只作用于已有管理员，撤销旧会话并保留审计，不把普通用户提升为管理员。输出文件不可已存在，也不可位于网站公开目录。Docker 生产环境请使用部署文档中的容器内命令。
+
 全新库的管理员初始化会建立默认站点节点设置。管理员可再执行受控 `npm run content:import -- --username YOUR_ADMIN` 导入六方向、社团介绍和加入说明初稿；重复执行不会覆盖运营修改，也不会创建开发账号或示例活动。正式运营前请在后台核实初稿的联系渠道和实际安排。
 
 ## 创建、修改与发布内容

@@ -2,7 +2,7 @@
 
 保留 IXD 开场、Welcome、星门、银河与星体旅程的社团内容与协作平台。原生 TypeScript / Three.js 前台，独立 React 管理后台，Fastify API 与 PostgreSQL 数据库。
 
-工作仓库：[Jc-augenstern/rine-webui-ixd](https://github.com/Jc-augenstern/rine-webui-ixd)。开发分支：feat/ixd-platform-v1。只读视觉基线 archive/ixd-beta-0.4 / v0.4.0 均为 37cfd60142d79ada1bd473fa2ff791dd64122631。平台仍在最终验收中，进度见 [PLATFORM_PLAN](docs/PLATFORM_PLAN.md)。
+工作仓库：[Jc-augenstern/rine-webui-ixd](https://github.com/Jc-augenstern/rine-webui-ixd)。开发分支：feat/ixd-platform-v1。只读视觉基线 archive/ixd-beta-0.4 / v0.4.0 均为 37cfd60142d79ada1bd473fa2ff791dd64122631。本地 M1～M6 与23项验收已完成，逐项证据、实测范围及上线前待配置事项见 [平台验收报告](docs/PLATFORM_VERIFICATION.md)。
 
 ## 在 Windows 本地开始
 
@@ -63,7 +63,7 @@ npm run check:viewport
 npm run build:all
 ```
 
-前台生产产物 dist，后台 admin/dist，服务端 server/dist；均可重新构建，不提交 Git。npm run build 仍单独构建前台。真实数据库测试仅使用专用 _test 库，测试邮件只去本机捕获服务。完整 23 项验收、实际录制、视觉回归及尚未验证范围记录在平台文档，不能用构建通过代替业务验收。
+前台生产产物 dist，后台 admin/dist，服务端 server/dist；均可重新构建，不提交 Git。npm run build 仍单独构建前台。真实数据库测试仅使用专用 _test 库，测试邮件只去本机捕获服务。平台集成测试22/22、原认证迁移测试11/11、全部构建、实际业务录制、生产PWA和视觉回归通过；完整23项验收及尚未验证范围见 [平台验收报告](docs/PLATFORM_VERIFICATION.md)。
 
 未来正式部署使用生产构建、同域反向代理、PostgreSQL 持久卷和正式 SMTP，见 [DEPLOYMENT](docs/DEPLOYMENT.md)。本任务不购买服务器、不改 DNS、不公开部署。npm run dev / Vite preview 不作为长期生产服务。
 
