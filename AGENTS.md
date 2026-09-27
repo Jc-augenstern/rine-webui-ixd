@@ -10,6 +10,36 @@
 - 星图内容维护 src/data/club-content.ts 与 star-map.ts；天空维护 src/galaxy，UI 维护 src/ui，状态机维护 src/ixd-experience.ts。
 - 验证 npm run check:auth、npm run build 与真实浏览器登录/星图/响应式。不要提交 node_modules、dist、研究素材、凭证或授权字体。
 
+## 项目上下文与接手规则（2026-09-23）
+
+本节补充上方 IXD 约束；下方原工程历史记录不构成当前任务的操作授权。当前用户明确的任务范围优先，文档整理本身不授权 commit、push、合并 main 或部署。
+
+三份核心文档各司其职：
+
+- [AGENTS.md](AGENTS.md)：Codex 工作规则、仓库边界和接手流程。
+- [docs/IXD_SPEC.md](docs/IXD_SPEC.md)：长期稳定的设计、动效与工程原则，不是开发日志或参数表。
+- [docs/CURRENT_STATE.md](docs/CURRENT_STATE.md)：可更新的实际状态、代码入口、验证证据和运行方式；其中提交、分支、测试结果都是有日期的快照。
+
+### NEW SESSION CHECKLIST
+
+**Before coding，必须按以下顺序接手：**
+
+- [ ] 完整阅读根目录 `AGENTS.md`，区分当前 IXD 规则与原工程历史。
+- [ ] 阅读 `docs/IXD_SPEC.md`，确认哪些设计原则不能自行改变。
+- [ ] 阅读 `docs/CURRENT_STATE.md`，确认当前能力、限制和证据日期。
+- [ ] 按任务阅读专项资料；先看 CURRENT_STATE 的文档索引，再选择 `docs/GALAXY-EXPLORATION.md`、`docs/VERIFICATION.md`、`docs/DELIVERY.md` 或对应迭代记录。
+- [ ] 检查 `git status`、当前分支、最近提交与 `git remote -v`；确认 origin 属于 Jc-augenstern，upstream 只读。
+- [ ] 检查相关实际代码与必要的运行行为，再开始修改；文档不能替代代码检查。
+
+维护规则：
+
+1. 只有用户明确改变设计原则或项目规范时，才相应修改 IXD_SPEC；不要把临时实验、某轮调参或尚未确认的方案升级为长期规则。
+2. 较大功能完成后应核对并更新 CURRENT_STATE；分支、模块职责或已知限制发生变化时同步更新。代码或运行状态与它不一致时，先核实实际实现，再纠正文档。
+3. 实际代码、当前运行结果和 Git 状态是 CURRENT_STATE 的依据。仅有旧记录支持的内容标为 Historical note / Needs verification，不能冒充本轮验证。
+4. 保留历史文档及其原始含义；通过职责说明和链接消除冲突。旧 DELIVERY / VERIFICATION 的“完成”“最新”及历史授权不自动适用于当前版本或任务。
+5. 文档整理不得顺手修改网站代码、视觉、动画或数据；发现问题只记录。上方 auth/build/浏览器验证要求面向网站功能修改，纯文档任务采用文档审查和 Git 差异检查，必要时做不改文件的运行抽查。注意 `predev` / `prebuild` 会执行资源生成，不要为文档检查意外改写 `public/`。
+6. 遵守当前用户对提交、推送、合并与部署的范围限制；不要从原工程历史继承操作授权。绝不默认向 upstream 写入。
+
 ---
 
 ## 以下为原工程历史记录，仅供技术溯源
