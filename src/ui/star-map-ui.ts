@@ -395,6 +395,8 @@ export class StarMapUI {
       this.pointer.y += (y - this.pointer.y) * ease;
       const offset = `${(this.pointer.x * -7).toFixed(2)}px ${(this.pointer.y * -5).toFixed(2)}px`;
       for (const glyph of this.nodeGlyphs) glyph.style.translate = offset;
+      this.element.style.setProperty("--sm-px", `${(50 + this.pointer.x * 50).toFixed(1)}%`);
+      this.element.style.setProperty("--sm-py", `${(50 + this.pointer.y * 50).toFixed(1)}%`);
     }
     const flight = this.flight;
     if (!flight) return;
