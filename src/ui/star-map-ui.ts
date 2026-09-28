@@ -85,7 +85,7 @@ export class StarMapUI {
             <p class="sm-kicker">IXD STAR MAP <span> / 001</span></p>
             <h1>IXD</h1>
             <p class="sm-motto">让灵感漫步于星辰大海</p>
-            <p class="sm-english">LET INSPIRATION WANDER AMONG THE STARS</p>
+            <p class="sm-english">LET INSPIRATION ROAM THE COSMOS</p>
             <p class="sm-invitation"><span>＋</span> 选择一颗星，开始探索</p>
           </div>
           ${starMap.map((star) => this.starMarkup(star)).join("")}
@@ -115,7 +115,6 @@ export class StarMapUI {
           <footer class="sm-terminal-bottom"><span>IXD / KNOWLEDGE NETWORK</span><span>ESC 返回</span></footer>
         </article>
       </section>
-      <button class="sm-core-cancel" type="button" data-action="core-back" hidden>← 返回 IXD CORE</button>
       <div class="sm-announcer" role="status" aria-live="polite" aria-atomic="true"></div>`;
     host.append(this.element);
     this.home = this.element.querySelector(".sm-home")!;
@@ -248,9 +247,8 @@ export class StarMapUI {
     if (target === 1) this.element.scrollTop = 0;
     this.element.dataset.coreJourney = target ? 'entering' : 'leaving';
     this.options.onFocus({ x: .5, y: .5 });
-    const cancel = this.element.querySelector<HTMLButtonElement>('.sm-core-cancel')!;
-    cancel.hidden = false;
-    cancel.focus({ preventScroll: true });
+    // Keep Escape on the existing dialog while the shared CORE glyph travels.
+    this.modal.focus({ preventScroll: true });
     const result = new Promise<boolean>(resolve => { this.coreJourney = { progress, target, resolve }; });
     this.paintCoreJourney(progress);
     if (this.reduced) this.finishCoreJourney(target);
@@ -285,7 +283,6 @@ export class StarMapUI {
     const field = this.home.querySelector<HTMLElement>('.sm-field')!;
     field.style.removeProperty('transform'); field.style.removeProperty('transform-origin'); field.style.removeProperty('opacity');
     this.voyager.style.removeProperty('opacity');
-    this.element.querySelector<HTMLElement>('.sm-core-cancel')!.hidden = true;
   }
 
   private finishCoreJourney(target: 0 | 1) {
@@ -338,7 +335,7 @@ export class StarMapUI {
   }
   updateSite(settings: { siteName: string; tagline: string; nodes: { routeKey: string; title: string; subtitle: string; enabled: boolean; visualPreset: string }[] }) {
     this.home.querySelector<HTMLElement>('.sm-intro h1')!.textContent = settings.siteName;
-    this.home.querySelector<HTMLElement>('.sm-motto')!.textContent = settings.tagline;
+    // The paired hero slogan is authored frontend copy; site data still owns the title and nodes.
     for (const config of settings.nodes) {
       const node = this.home.querySelector<HTMLButtonElement>(`[data-star="${config.routeKey}"]`);
       if (!node) continue;
@@ -498,7 +495,7 @@ export class StarMapUI {
     const layout = coreSystemLayout[star.id] ?? star;
     const mobile = layout.mobilePosition ?? layout.position;
     const style = `--x:${layout.position.x * 100}%;--y:${layout.position.y * 100}%;--mx:${mobile.x * 100}%;--my:${mobile.y * 100}%;--star-color:${star.color ?? "#97aacd"};--brightness:${star.brightness}`;
-    if (!star.enabled) return `<span class="sm-empty" style="${style}" tabindex="0" role="img" aria-label="未探索星，等待下一次探索，暂不可进入"><i class="sm-empty-glyph">${dormantGlyph(star)}</i><span>UNEXPLORED<br><b>等待下一次探索</b></span></span>`;
+    if (!star.enabled) return `<span class="sm-empty" style="${style}" data-reserved-star="${escape(star.id)}" hidden inert aria-hidden="true"><i class="sm-empty-glyph">${dormantGlyph(star)}</i><span>UNEXPLORED<br><b>等待下一次探索</b></span></span>`;
     return `<button type="button" class="sm-star sm-star-${star.type}" style="${style}" data-star="${star.id}" data-visual-preset="${star.visualPreset}" data-motion-preset="${star.motionPreset}" data-route="${escape(star.route ?? "")}" aria-label="${escape(star.title)}，打开详情" aria-haspopup="dialog" aria-expanded="false">
       <span class="sm-star-glyph" aria-hidden="true">${galaxyGlyph(star, star.id)}</span>
       ${star.number ? `<span class="sm-star-number" aria-hidden="true">${star.number}</span>` : ""}
@@ -672,7 +669,7 @@ export class StarMapUI {
       else if (action === "settings") this.options.onSettings();
       else if (action === "sound") this.options.onSound();
       else if (action === "replay") this.options.onReplay();
-      else if (action === 'main-level' || action === 'core-back') this.options.onLevelChange?.('main');
+      else if (action === 'main-level') this.options.onLevelChange?.('main');
       return;
     }
     const star = target.closest<HTMLElement>("[data-star]");

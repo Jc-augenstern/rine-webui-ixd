@@ -24,7 +24,7 @@ export const coreSystemMarkup = `<div class="sm-core-system" aria-hidden="true">
     <g class="sm-core-dust">${dust}</g>
   </svg>
   <div class="sm-core-center"><i></i><span>IXD CORE</span><small>六个方向 · 一个灵感宇宙</small></div>
-</div><div class="sm-core-heading"><p>IXD CORE / INNER GALAXY</p><h2>六方向星系</h2><span>选择一颗方向星，探索它的知识与实践</span></div>`;
+</div><div class="sm-core-heading"><p>IXD CORE / INNER GALAXY</p><h2>六大方向</h2></div>`;
 
 export const smoothRange = (value: number, start: number, end: number) => {
   const p = Math.max(0, Math.min(1, (value - start) / (end - start)));

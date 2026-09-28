@@ -15,10 +15,13 @@
 .sm-root .sm-level-back { position:absolute; top:86px; left:4.2%; z-index:5; padding:8px 0; font-size:12px; color:#afbae5; }
 .sm-direct { position:absolute; top:88px; right:4.2%; display:flex; justify-content:flex-end; flex-wrap:wrap; gap:6px 14px; max-width:60%; z-index:5; }
 .sm-direct button { min-height:28px; font-size:10px; color:#9fafd0; }
-.sm-home.is-focusing .sm-direct, .sm-home.is-focusing .sm-level-back { visibility:hidden; }
+.sm-direct, .sm-level-back { opacity:1; transition:opacity .4s ease; }
+.sm-home.is-focusing :is(.sm-direct, .sm-level-back) { opacity:0; pointer-events:none; }
+.sm-home.is-returning :is(.sm-direct, .sm-level-back) { opacity:1; transition-delay:.4s; }
 .sm-intro { max-width:44%; }
 .sm-root .sm-intro h1 { font-size:clamp(34px,3.3vw,54px); letter-spacing:.06em; overflow-wrap:anywhere; display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; }
-.sm-root .sm-motto { max-width:100%; font-size:clamp(18px,1.4vw,23px); line-height:1.5; display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; }
+.sm-root .sm-motto { max-width:100%; margin-top:8px; font-size:clamp(20px,1.6vw,25px); line-height:1.6; letter-spacing:.1em; display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; }
+.sm-root .sm-english { margin-top:7px !important; color:#91a1c0; font-size:clamp(8px,.62vw,10px); line-height:1.6; letter-spacing:.16em; }
 .sm-root[data-level="main"] .sm-star-function:not([data-star="core"]):not([data-star="account"]) .sm-star-glyph { width:96px; height:96px; margin:-48px; }
 .sm-root[data-level="main"] .sm-star-function:not([data-star="core"]):not([data-star="account"]) .sm-star-label { top:56px; font-size:clamp(14px,1.1vw,18px); }
 .pf-content { font-size:14px; line-height:1.8; overflow-wrap:anywhere; }
@@ -71,8 +74,8 @@
 @media(max-width:760px) {
   .sm-intro { width:100%; max-width:none; }
   .sm-root .sm-intro h1, .sm-root[data-level="directions"] .sm-intro h1 { font-size:clamp(26px,7.2vw,36px); letter-spacing:.06em; display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; }
-  .sm-root .sm-motto { font-size:16px; line-height:1.5; margin-top:8px; display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; }
-  .sm-root .sm-english { margin-top:6px !important; }
+  .sm-root .sm-motto { font-size:clamp(16px,4.2vw,18px); line-height:1.6; letter-spacing:.08em; }
+  .sm-root .sm-english { font-size:8px; letter-spacing:.12em; margin-top:6px !important; }
   .sm-root .sm-invitation { display:none; }
   .sm-direct { top:239px; left:27px; right:27px; max-width:none; justify-content:flex-start; gap:4px 16px; }
   .sm-root .sm-level-back { top:73px; left:27px; }

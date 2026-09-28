@@ -1,4 +1,4 @@
-.sm-core-system, .sm-core-heading { display: none; }
+.sm-core-system, .sm-core-heading { display: none; opacity: 1; transition: opacity .4s ease; }
 .sm-root[data-level="directions"] .sm-home { min-height: 740px; }
 .sm-root[data-level="directions"] :is(.sm-intro, .sm-growth, .sm-empty, .sm-direct, .sm-map-coordinates) { display: none; }
 .sm-root[data-level="directions"] .sm-field { inset: 168px 9% 145px; }
@@ -13,25 +13,26 @@
 .sm-core-center i { width: 6px; height: 6px; border: 1px solid #bdd7ff; transform: rotate(45deg); box-shadow: 0 0 14px #a5baff44; }
 .sm-core-center span { font-size: 11px; letter-spacing: .23em; }
 .sm-core-center small { font-size: 9px; white-space: nowrap; color: #8c9dbb; letter-spacing: .08em; }
-.sm-root[data-level="directions"] .sm-core-heading { display: block; position: absolute; left: 50%; top: -69px; transform: translateX(-50%); text-align: center; white-space: nowrap; pointer-events: none; }
+.sm-root[data-level="directions"] .sm-core-heading { display: block; position: absolute; left: 50%; top: -64px; transform: translateX(-50%); text-align: center; white-space: nowrap; pointer-events: none; }
 .sm-core-heading p { font-size: 8px; color: #9b9bc8; letter-spacing: .2em; }
-.sm-core-heading h2 { font-size: 23px; font-weight: 300; margin: 9px 0 7px; letter-spacing: .12em; color: #e0e7f9; }
-.sm-core-heading > span { color: #8397b7; font-size: 10px; }
+.sm-core-heading h2 { font-size: 23px; font-weight: 300; margin: 9px 0 0; letter-spacing: .12em; color: #e0e7f9; }
 .sm-root[data-core-journey] { overflow: hidden !important; }
 .sm-root[data-core-journey] .sm-field { will-change: transform, opacity; transition: none; }
 .sm-root[data-core-journey] :is(.sm-header, .sm-footer, .sm-level-back) { opacity: var(--core-space-reveal, 0); pointer-events: none; transition: none; }
 .sm-root[data-core-journey] .sm-modal::before { opacity: 0; }
 .sm-root[data-core-journey] :is(.sm-focus-link, .sm-focus-caption, .sm-survey, .sm-flight-cancel) { visibility: hidden; }
 .sm-root[data-core-journey] .sm-terminal { pointer-events: none; }
-.sm-root .sm-core-cancel { position: fixed; z-index: 12; top: 22px; right: 4.2%; padding: 10px; font-size: 12px; color: #bac7e7; }
-.sm-core-cancel[hidden] { display: none !important; }
+/* CORE keeps the terminal close control and the left-hand parent navigation. */
+.sm-modal[data-active-star="core"] .sm-flight-cancel,
+.sm-root[data-level="directions"] .sm-flight-cancel { display: none; }
 /* Returning reaches an already-focused CORE. Hidden main labels must not fade
    through the last frame as they become displayable again. Normal close clears
    this class before playing the existing return-to-main transitions. */
-.sm-home.is-core-restored.is-focusing :is(.sm-intro, .sm-star:not(.is-selected), .sm-empty, .sm-constellation, .sm-growth, .sm-map-coordinates) { opacity: 0 !important; transition: none !important; }
+.sm-home.is-core-restored.is-focusing :is(.sm-intro, .sm-direct, .sm-level-back, .sm-star:not(.is-selected), .sm-empty, .sm-constellation, .sm-growth, .sm-map-coordinates),
+.sm-home.is-core-restored.is-focusing .sm-star.is-selected > :is(.sm-star-label, .sm-star-number) { opacity: 0 !important; transition: none !important; }
 .sm-home.is-core-restored.is-focusing :is(.sm-header, .sm-footer) { transition: none; }
-.sm-root[data-level="directions"] .sm-home.is-focusing :is(.sm-core-system, .sm-core-heading) { opacity: 0; transition: opacity .35s; }
-.sm-root[data-level="directions"] .sm-home.is-returning :is(.sm-core-system, .sm-core-heading) { opacity: 1; transition: opacity .4s .4s; }
+.sm-root[data-level="directions"] .sm-home.is-focusing :is(.sm-core-system, .sm-core-heading) { opacity: 0; }
+.sm-root[data-level="directions"] .sm-home.is-returning :is(.sm-core-system, .sm-core-heading) { opacity: 1; transition-delay: .4s; }
 @media (max-width: 760px) {
   .sm-root[data-level="directions"] .sm-home { min-height: 1100px; }
   .sm-root[data-level="directions"] .sm-field { inset: 223px 24px auto; height: 715px; }
