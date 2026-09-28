@@ -38,7 +38,7 @@
       html, body { margin: 0; background: var(--theme-paper, #111722); }
       #viewport { position: relative; width: 100vw; height: 100dvh; overflow: hidden; }
       #boot-background.terminal-background { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; background: radial-gradient(ellipse at 51% 48%, var(--theme-panel, #1b2434) 0%, var(--theme-paper, #111722) 76%, var(--theme-field, #253149) 100%); }
-      [data-dark-surface="true"] #boot-background.terminal-background { background: radial-gradient(ellipse at 51% 48%, var(--theme-panel), var(--theme-paper) 76%); }
+      [data-dark-surface="true"] #boot-background.terminal-background { background: radial-gradient(ellipse 40% 30% at 70% 30%, rgba(183, 164, 255, .12), transparent 70%), radial-gradient(ellipse 36% 28% at 24% 74%, rgba(122, 232, 217, .07), transparent 70%), radial-gradient(ellipse at 51% 48%, var(--theme-panel), var(--theme-paper) 76%); }
       [data-dark-surface="true"] #boot-background.terminal-background svg > g { stroke: var(--theme-line); }
       #boot-background.terminal-background > svg { display: block; width: 100%; height: 100%; opacity: .09; filter: blur(3px); animation: terminal-background-drift 48s ease-in-out infinite alternate; }
       #boot-background.terminal-background > .boot-white { display: none; }
@@ -51,11 +51,14 @@
       .preparation-access > span { display: inline-block; animation: preparation-letters var(--ixd-preparation-duration) steps(26, end) both; }
       .preparation-access .boot-phrase[hidden] { display: inline-flex; visibility: hidden; }
       .preparation-access .boot-phrase-letter[hidden] { display: block; visibility: hidden; }
-      .preparation-connection { margin-top: 30px; font-size: clamp(8px, .7vw, 11px); letter-spacing: 2px; opacity: .7; }
-      .preparation-track { width: 180px; height: 1px; margin-top: 20px; background: color-mix(in srgb, currentColor 20%, transparent); overflow: hidden; }
-      .preparation-track i { display: block; width: 100%; height: 100%; background: currentColor; transform-origin: left; animation: preparation-progress var(--ixd-preparation-duration) linear both; }
+      .preparation-connection { margin-top: 30px; font-size: clamp(8px, .7vw, 11px); letter-spacing: 4px; opacity: .72; }
+      .startup-preparation::before { content: ""; width: 10px; height: 10px; margin-bottom: 34px; border-radius: 50%; background: #fff4e2; box-shadow: 0 0 0 7px rgba(255, 217, 166, .1), 0 0 26px 6px rgba(255, 217, 166, .55), 0 0 80px 24px rgba(183, 164, 255, .22); animation: preparation-star 2.4s ease-in-out infinite; }
+      .preparation-track { width: 200px; height: 2px; margin-top: 22px; border-radius: 2px; background: color-mix(in srgb, currentColor 16%, transparent); overflow: hidden; }
+      .preparation-track i { display: block; width: 100%; height: 100%; border-radius: 2px; background: linear-gradient(90deg, #b7a4ff, #ffd9a6 80%, #fff4e2); box-shadow: 0 0 10px rgba(255, 217, 166, .7); transform-origin: left; animation: preparation-progress var(--ixd-preparation-duration) linear both; }
       .preparation-state { min-height: 1.4em; margin-top: 20px; font-size: 12px; }
-      .preparation-retry { color: inherit; background: none; border: 0; border-bottom: 1px solid; padding: 10px; cursor: pointer; }
+      .preparation-retry { margin-top: 8px; color: inherit; background: rgba(255, 217, 166, .08); border: 1px solid rgba(255, 217, 166, .4); border-radius: 999px; padding: 10px 22px; cursor: pointer; }
+      @keyframes preparation-star { 50% { transform: scale(.72); opacity: .7; } }
+      @media (prefers-reduced-motion: reduce) { .startup-preparation::before { animation: none; } }
       @keyframes preparation-progress { from { transform: scaleX(0); } to { transform: scaleX(1); } }
       @keyframes preparation-letters { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0); } }
       @keyframes terminal-background-drift { from { transform: translate(17.9px, -15.8px) scale(1.08); } to { transform: translate(-17.9px, -48px) scale(1.08); } }

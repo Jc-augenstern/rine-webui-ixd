@@ -118,11 +118,11 @@ export class StarField {
     const atlas = nebulaAtlas();
     const atlasPixels = atlas.getContext("2d")!.getImageData(0, 0, atlas.width, atlas.height).data;
     const colors = [
-      new THREE.Color("#d4ddff"),
-      new THREE.Color("#bfc1ff"),
-      new THREE.Color("#a4ccdf"),
-      new THREE.Color("#edf2ff"),
-      new THREE.Color("#f1c3a6"),
+      new THREE.Color("#e3e2ff"),
+      new THREE.Color("#c9b8ff"),
+      new THREE.Color("#a9e6dc"),
+      new THREE.Color("#fff4e6"),
+      new THREE.Color("#ffd4a0"),
     ];
     for (const layer of layers) {
       const random = seededRandom(layer.seed);

@@ -1,12 +1,17 @@
+/* Stargate bridge: a point of light is born, irises open and the live sky streams through. */
 .ixd-portal { position: absolute; inset: 0; z-index: 24; pointer-events: none; overflow: hidden; }
 .ixd-portal[hidden] { display: none; }
 .ixd-portal-frame { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; fill: none; stroke-linecap: round; }
-.ixd-portal-edge { stroke: #9cb8e8; stroke-width: 1.3; }
-.ixd-portal-echo { stroke: #7776bf; stroke-width: .65; opacity: .55; }
-.ixd-portal-lines { stroke: #79869e; stroke-width: .75; }
-.ixd-portal-dust { fill: #c0def9; stroke: none; }
-.ixd-portal-core { position: absolute; left: 0; top: 0; width: 52px; height: 52px; will-change: transform; }
+.ixd-portal-bloom { stroke: none; mix-blend-mode: screen; }
+.ixd-portal-edge { stroke: #ffe4c0; stroke-width: 1.4; filter: drop-shadow(0 0 6px #ffd9a680) drop-shadow(0 0 22px #b8a6ff55); }
+.ixd-portal-echo { stroke: #b9a7ff; stroke-width: .7; stroke-dasharray: 2 7; opacity: .6; }
+.ixd-portal-orbits { stroke: #7ae8d9; stroke-width: .8; }
+.ixd-portal-lines { stroke: #eef0ff; stroke-width: 1.1; }
+.ixd-portal-dust { fill: #fff1dc; stroke: none; }
+.ixd-portal-core { position: absolute; left: 0; top: 0; width: 52px; height: 52px; will-change: transform; filter: drop-shadow(0 0 14px #b9a7ff66); }
 .ixd-portal-core .ixd-mark { width: 100%; height: 100%; overflow: visible; }
-.ixd-portal-skip { position: absolute; right: max(28px, env(safe-area-inset-right)); bottom: max(26px, env(safe-area-inset-bottom)); pointer-events: auto; padding: 10px 14px; color: #9caac4; background: #0b1124dc; border: 1px solid #576080; font-size: 11px; letter-spacing: .12em; }
-.ixd-portal-skip span { margin-left: 15px; }
+.ixd-portal-skip { position: absolute; right: max(28px, env(safe-area-inset-right)); bottom: max(26px, env(safe-area-inset-bottom)); pointer-events: auto; display: inline-flex; align-items: center; gap: 12px; min-height: 40px; padding: 0 18px; color: #d9dcf6; background: rgba(12, 14, 34, .66); border: 1px solid rgba(185, 175, 255, .3); border-radius: 999px; font-size: 12px; letter-spacing: .12em; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); transition: border-color .25s, color .25s, background .25s; }
+.ixd-portal-skip:hover, .ixd-portal-skip:focus-visible { color: #fff; border-color: #ffe2b6; background: rgba(40, 34, 70, .72); }
+.ixd-portal-skip:focus-visible { outline: 2px solid #ffe2b6; outline-offset: 3px; }
+.ixd-portal-skip span { color: #ffe2b6; }
 .ixd-portal[data-reduced="true"] .ixd-portal-frame { display: none; }

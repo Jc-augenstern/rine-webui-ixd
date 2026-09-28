@@ -12,7 +12,7 @@ import { StartupPreparation, PREPARATION_DURATION, PREPARATION_FADE_DURATION } f
 import { WELCOME_FLASH_DURATION_MS } from "./welcome-transition";
 import { platformApi } from './platform/api';
 import { PlatformUI } from './platform/platform-ui';
-import './ixd-observatory.css';
+import './ixd-starry-v2.css';
 
 type Phase =
   | "preparing"

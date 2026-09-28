@@ -76,7 +76,7 @@ export class GalaxyScene {
     this.fallback.className = "galaxy-static-sky";
     this.fallback.setAttribute("aria-hidden", "true");
     this.fallback.style.cssText =
-      "position:absolute;inset:0;width:100%;height:100%;pointer-events:none;background:#070b18;";
+      "position:absolute;inset:0;width:100%;height:100%;pointer-events:none;background:#05060f;";
     host.append(this.fallback);
     try {
       this.renderer = new THREE.WebGLRenderer({
@@ -85,7 +85,7 @@ export class GalaxyScene {
         powerPreference: "low-power",
       });
       this.renderer.outputColorSpace = THREE.SRGBColorSpace;
-      this.renderer.setClearColor("#070b18", 1);
+      this.renderer.setClearColor("#05060f", 1);
       this.renderer.domElement.className = "galaxy-webgl";
       this.renderer.domElement.setAttribute("aria-hidden", "true");
       this.renderer.domElement.style.cssText =
@@ -342,10 +342,10 @@ export class GalaxyScene {
       // finishing. The lightweight sky still provides readable navigation.
       this.fallbackReason = "nebula-unavailable";
       const gradient = context.createLinearGradient(0, h, w, 0);
-      gradient.addColorStop(0, "#070b18");
+      gradient.addColorStop(0, "#05060f");
       gradient.addColorStop(0.45, "#172241");
       gradient.addColorStop(0.6, "#1b1e3b");
-      gradient.addColorStop(1, "#070b18");
+      gradient.addColorStop(1, "#05060f");
       context.fillStyle = gradient;
       context.fillRect(0, 0, w, h);
     }

@@ -49,9 +49,9 @@ export function nebulaAtlas(): HTMLCanvasElement {
       const violet = Math.exp(-((px + 0.34) ** 2 * 4 + (py - 0.35) ** 2 * 10));
       const veil = Math.exp(-river * river * 3) * curl;
       const i = (y * canvas.width + x) * 4;
-      pixels.data[i] = 3 + veil * 9 + cloud * (65 + warm * 104 + violet * 37);
-      pixels.data[i + 1] = 6 + veil * 13 + cloud * (132 - warm * 28 - violet * 28);
-      pixels.data[i + 2] = 15 + veil * 30 + cloud * (225 - warm * 87);
+      pixels.data[i] = 4 + veil * 13 + cloud * (60 + warm * 150 + violet * 78);
+      pixels.data[i + 1] = 5 + veil * 10 + cloud * (100 + warm * 46 - violet * 44);
+      pixels.data[i + 2] = 14 + veil * 32 + cloud * (206 - warm * 124 + violet * 24);
       pixels.data[i + 3] = 255;
     }
   }

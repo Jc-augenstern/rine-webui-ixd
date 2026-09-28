@@ -5,12 +5,14 @@ const ease = (n: number) => { const t = clamp(n); return t * t * (3 - 2 * t); };
 export const PORTAL_DURATION = 2.4;
 export const REDUCED_PORTAL_DURATION = 0.28;
 
-/** A clip over the live sky, driven only by the application's existing clock. */
+/** A circular stargate over the live sky, driven only by the application's existing clock. */
 export class IxdPortal {
   private element = document.createElement("div");
   private svg: SVGSVGElement;
-  private edge: SVGPolygonElement;
-  private echo: SVGPolygonElement;
+  private edge: SVGCircleElement;
+  private echo: SVGCircleElement;
+  private bloom: SVGCircleElement;
+  private orbits: SVGEllipseElement[];
   private lines: SVGLineElement[];
   private dust: SVGCircleElement[];
   private origin: HTMLElement;
@@ -37,16 +39,21 @@ export class IxdPortal {
     this.element.className = "ixd-portal";
     this.element.hidden = true;
     this.element.innerHTML = `<svg class="ixd-portal-frame" aria-hidden="true">
-      <g class="ixd-portal-lines">${Array.from({ length: 8 }, () => '<line/>').join("")}</g>
-      <polygon class="ixd-portal-echo"/><polygon class="ixd-portal-edge"/>
-      <g class="ixd-portal-dust">${Array.from({ length: 16 }, (_, i) => `<circle r="${i % 3 === 0 ? 1.8 : 1}"/>`).join("")}</g>
+      <defs><radialGradient id="ixd-portal-glow"><stop offset="0" stop-color="#fff4e2" stop-opacity=".95"/><stop offset=".32" stop-color="#b7a6ff" stop-opacity=".38"/><stop offset="1" stop-color="#63e3d6" stop-opacity="0"/></radialGradient></defs>
+      <circle class="ixd-portal-bloom" fill="url(#ixd-portal-glow)"/>
+      <g class="ixd-portal-lines">${Array.from({ length: 28 }, () => "<line/>").join("")}</g>
+      <g class="ixd-portal-orbits">${Array.from({ length: 3 }, () => "<ellipse/>").join("")}</g>
+      <circle class="ixd-portal-echo"/><circle class="ixd-portal-edge"/>
+      <g class="ixd-portal-dust">${Array.from({ length: 18 }, (_, i) => `<circle r="${i % 3 === 0 ? 2.2 : 1.1}"/>`).join("")}</g>
     </svg>
     <button class="ixd-portal-skip" type="button">跳过过渡 <span aria-hidden="true">↗</span></button>`;
     this.svg = this.element.querySelector("svg.ixd-portal-frame")!;
     this.edge = this.element.querySelector(".ixd-portal-edge")!;
     this.echo = this.element.querySelector(".ixd-portal-echo")!;
+    this.bloom = this.element.querySelector(".ixd-portal-bloom")!;
+    this.orbits = [...this.element.querySelectorAll<SVGEllipseElement>(".ixd-portal-orbits ellipse")];
     this.lines = [...this.element.querySelectorAll("line")];
-    this.dust = [...this.element.querySelectorAll("circle")];
+    this.dust = [...this.element.querySelectorAll<SVGCircleElement>(".ixd-portal-dust circle")];
     this.skip = this.element.querySelector("button")!;
     this.skip.addEventListener("click", onSkip, { signal: this.events.signal });
     this.element.addEventListener("keydown", event => {
@@ -112,44 +119,57 @@ export class IxdPortal {
     const w = this.width, h = this.height, cx = w / 2, cy = h / 2;
     this.moveCore(seconds);
     if (this.reduced) {
-      // Brief stationary reveal; no camera travel, contracting lines or flying core.
+      // Brief stationary reveal; no warp streaks, orbit rings or flying core.
       const p = ease(seconds / REDUCED_PORTAL_DURATION);
-      this.sky.style.clipPath = `inset(${(1 - p) * 50}% ${(1 - p) * 50}%)`;
+      this.sky.style.clipPath = `circle(${(p * 75).toFixed(2)}% at 50% 50%)`;
       return;
     }
+    // Star birth: a point of light gathers, the gate irises open, the sky
+    // streams outward like a short warp, then the orbit rings dissolve.
     const gather = ease(seconds / 0.45);
     const open = ease((seconds - 0.45) / 0.75);
     const cross = ease((seconds - 1.2) / 0.75);
     const settle = ease((seconds - 1.95) / 0.45);
-    const initial = Math.min(w, h) * 0.075;
-    const middle = Math.min(w, h) * 0.4;
+    const initial = Math.min(w, h) * 0.06;
+    const middle = Math.min(w, h) * 0.36;
+    const far = Math.hypot(w, h) * .56;
     const radius = seconds < .45 ? initial * gather : seconds < 1.2
       ? initial + (middle - initial) * open
-      : middle + ((w + h) * .55 - middle) * cross;
-    const diamond = (r: number) => `${cx},${cy - r} ${cx + r},${cy} ${cx},${cy + r} ${cx - r},${cy}`;
+      : middle + (far - middle) * cross;
     const hole = seconds < .45 ? 0 : radius;
-    this.sky.style.clipPath = `polygon(${cx}px ${cy - hole}px,${cx + hole}px ${cy}px,${cx}px ${cy + hole}px,${cx - hole}px ${cy}px)`;
-    this.edge.setAttribute("points", diamond(radius));
-    this.echo.setAttribute("points", diamond(radius * 1.025 + 7));
+    this.sky.style.clipPath = `circle(${hole.toFixed(1)}px at ${cx}px ${cy}px)`;
+    for (const ring of [this.edge, this.echo, this.bloom]) { ring.setAttribute("cx", String(cx)); ring.setAttribute("cy", String(cy)); }
+    this.edge.setAttribute("r", String(radius));
+    this.echo.setAttribute("r", String(radius * 1.04 + 9));
+    this.bloom.setAttribute("r", String(Math.max(1, initial * 2.8 * gather + radius * .45)));
+    this.bloom.style.opacity = String(gather * (1 - cross) * .9);
     this.svg.style.opacity = String(1 - settle);
+    this.orbits.forEach((orbit, i) => {
+      const k = 1.3 + i * .42;
+      orbit.setAttribute("cx", String(cx)); orbit.setAttribute("cy", String(cy));
+      orbit.setAttribute("rx", String(radius * k)); orbit.setAttribute("ry", String(radius * k * (.32 + i * .07)));
+      orbit.setAttribute("transform", `rotate(${(-18 + i * 26 + seconds * (8 + i * 5)).toFixed(2)} ${cx} ${cy})`);
+      orbit.style.opacity = String(open * (1 - cross * .85) * (.55 - i * .13));
+    });
     this.lines.forEach((line, i) => {
-      const angle = i * Math.PI / 4;
-      const outer = Math.max(w, h) * .8 * (1 - gather) + radius;
-      const inner = radius * .72;
+      // Warp streaks on seeded lanes, sliding outward from the gate's rim.
+      const angle = i * 2.39996;
+      const lane = (i * 37 % 100) / 100;
+      const travel = (lane + seconds * (.55 + lane * .5)) % 1;
+      const inner = radius * (1.02 + travel * .9);
+      const outer = inner + (18 + lane * 60) * (.35 + cross * 1.4);
       line.setAttribute("x1", String(cx + Math.cos(angle) * inner));
       line.setAttribute("y1", String(cy + Math.sin(angle) * inner));
       line.setAttribute("x2", String(cx + Math.cos(angle) * outer));
       line.setAttribute("y2", String(cy + Math.sin(angle) * outer));
-      line.style.opacity = String((1 - open) * .6);
+      line.style.opacity = String(gather * (1 - settle) * (1 - travel) * (.3 + lane * .45));
     });
     this.dust.forEach((dot, i) => {
-      const u = ((i / 4 + seconds * .13) % 1);
-      const edge = Math.floor(i / 4);
-      const points = [[cx, cy - radius], [cx + radius, cy], [cx, cy + radius], [cx - radius, cy]];
-      const a = points[edge], b = points[(edge + 1) % 4];
-      dot.setAttribute("cx", String(a[0] + (b[0] - a[0]) * u));
-      dot.setAttribute("cy", String(a[1] + (b[1] - a[1]) * u));
-      dot.style.opacity = String(open * (1 - settle) * (i % 3 === 0 ? .8 : .4));
+      const a = i / this.dust.length * Math.PI * 2 + seconds * (.6 + (i % 3) * .18);
+      const rr = radius * (1 + (i % 4) * .012) + (i % 2 ? 4 : -3);
+      dot.setAttribute("cx", String(cx + Math.cos(a) * rr));
+      dot.setAttribute("cy", String(cy + Math.sin(a) * rr));
+      dot.style.opacity = String(open * (1 - settle) * (i % 3 === 0 ? .9 : .45));
     });
   }
 
